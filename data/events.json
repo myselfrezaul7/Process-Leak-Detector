@@ -1,0 +1,1834 @@
+[
+  {
+    "caseId": "C-0032",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-11T12:04:23.831Z",
+    "ownerTeam": "Approver",
+    "valueEur": 28483
+  },
+  {
+    "caseId": "C-0028",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-11T17:04:23.831Z",
+    "ownerTeam": "Support",
+    "valueEur": 49110
+  },
+  {
+    "caseId": "C-0026",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-11T21:04:23.831Z",
+    "ownerTeam": "Finance",
+    "valueEur": 12867
+  },
+  {
+    "caseId": "C-0008",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-12T11:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 15350
+  },
+  {
+    "caseId": "C-0025",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-12T16:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 20276
+  },
+  {
+    "caseId": "C-0028",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-12T20:04:23.831Z",
+    "ownerTeam": "Support",
+    "valueEur": 49110
+  },
+  {
+    "caseId": "C-0004",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-12T22:04:23.829Z",
+    "ownerTeam": "Legal",
+    "valueEur": 51234
+  },
+  {
+    "caseId": "C-0028",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-13T01:04:23.831Z",
+    "ownerTeam": "CSM",
+    "valueEur": 49110
+  },
+  {
+    "caseId": "C-0018",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-13T15:04:23.830Z",
+    "ownerTeam": "Legal",
+    "valueEur": 28588
+  },
+  {
+    "caseId": "C-0004",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-02-14T02:04:23.829Z",
+    "ownerTeam": "Legal",
+    "valueEur": 51234
+  },
+  {
+    "caseId": "C-0026",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-14T05:04:23.831Z",
+    "ownerTeam": "Finance",
+    "valueEur": 12867
+  },
+  {
+    "caseId": "C-0020",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-14T08:04:23.830Z",
+    "ownerTeam": "Legal",
+    "valueEur": 33359
+  },
+  {
+    "caseId": "C-0032",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-02-14T10:04:23.831Z",
+    "ownerTeam": "Approver",
+    "valueEur": 28483
+  },
+  {
+    "caseId": "C-0025",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-14T15:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 20276
+  },
+  {
+    "caseId": "C-0005",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-14T16:04:23.829Z",
+    "ownerTeam": "CSM",
+    "valueEur": 36172
+  },
+  {
+    "caseId": "C-0028",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-14T17:04:23.831Z",
+    "ownerTeam": "Support",
+    "valueEur": 49110
+  },
+  {
+    "caseId": "C-0026",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-14T21:04:23.831Z",
+    "ownerTeam": "Support",
+    "valueEur": 12867
+  },
+  {
+    "caseId": "C-0004",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-15T00:04:23.829Z",
+    "ownerTeam": "Legal",
+    "valueEur": 51234
+  },
+  {
+    "caseId": "C-0012",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-15T01:04:23.830Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 20228
+  },
+  {
+    "caseId": "C-0026",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-15T01:04:23.831Z",
+    "ownerTeam": "CSM",
+    "valueEur": 12867
+  },
+  {
+    "caseId": "C-0038",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-15T05:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 7689
+  },
+  {
+    "caseId": "C-0027",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-15T06:04:23.831Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 23712
+  },
+  {
+    "caseId": "C-0026",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-15T12:04:23.831Z",
+    "ownerTeam": "CSM",
+    "valueEur": 12867
+  },
+  {
+    "caseId": "C-0036",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-15T13:04:23.831Z",
+    "ownerTeam": "BDR",
+    "valueEur": 45705
+  },
+  {
+    "caseId": "C-0012",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-02-15T17:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 20228
+  },
+  {
+    "caseId": "C-0027",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-02-15T18:04:23.831Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 23712
+  },
+  {
+    "caseId": "C-0006",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-15T20:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 38970
+  },
+  {
+    "caseId": "C-0028",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-16T02:04:23.831Z",
+    "ownerTeam": "CSM",
+    "valueEur": 49110
+  },
+  {
+    "caseId": "C-0011",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-16T03:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 20766
+  },
+  {
+    "caseId": "C-0004",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-16T11:04:23.829Z",
+    "ownerTeam": "AE",
+    "valueEur": 51234
+  },
+  {
+    "caseId": "C-0025",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-16T15:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 20276
+  },
+  {
+    "caseId": "C-0020",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-02-16T16:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 33359
+  },
+  {
+    "caseId": "C-0021",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-16T16:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 31779
+  },
+  {
+    "caseId": "C-0004",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-16T23:04:23.829Z",
+    "ownerTeam": "AE",
+    "valueEur": 51234
+  },
+  {
+    "caseId": "C-0016",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-17T00:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 51681
+  },
+  {
+    "caseId": "C-0019",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-17T01:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 29305
+  },
+  {
+    "caseId": "C-0038",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-02-17T06:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 7689
+  },
+  {
+    "caseId": "C-0004",
+    "processArea": "sales",
+    "eventType": "lost",
+    "timestamp": "2026-02-17T09:04:23.829Z",
+    "ownerTeam": "AE",
+    "valueEur": 51234
+  },
+  {
+    "caseId": "C-0006",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-17T13:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 38970
+  },
+  {
+    "caseId": "C-0032",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-17T13:04:23.831Z",
+    "ownerTeam": "Approver",
+    "valueEur": 28483
+  },
+  {
+    "caseId": "C-0003",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-17T15:04:23.829Z",
+    "ownerTeam": "Support",
+    "valueEur": 11083
+  },
+  {
+    "caseId": "C-0012",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-17T23:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 20228
+  },
+  {
+    "caseId": "C-0020",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-18T01:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 33359
+  },
+  {
+    "caseId": "C-0028",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-02-18T12:04:23.831Z",
+    "ownerTeam": "CSM",
+    "valueEur": 49110
+  },
+  {
+    "caseId": "C-0006",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-18T14:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 38970
+  },
+  {
+    "caseId": "C-0003",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-18T20:04:23.829Z",
+    "ownerTeam": "Support",
+    "valueEur": 11083
+  },
+  {
+    "caseId": "C-0020",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-18T22:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 33359
+  },
+  {
+    "caseId": "C-0026",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-18T22:04:23.831Z",
+    "ownerTeam": "CSM",
+    "valueEur": 12867
+  },
+  {
+    "caseId": "C-0006",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-19T03:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 38970
+  },
+  {
+    "caseId": "C-0012",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-19T04:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 20228
+  },
+  {
+    "caseId": "C-0036",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-02-19T04:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 45705
+  },
+  {
+    "caseId": "C-0033",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-19T08:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 52952
+  },
+  {
+    "caseId": "C-0022",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-19T13:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 60882
+  },
+  {
+    "caseId": "C-0015",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-19T22:04:23.830Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 24594
+  },
+  {
+    "caseId": "C-0036",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-19T23:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 45705
+  },
+  {
+    "caseId": "C-0019",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-20T04:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 29305
+  },
+  {
+    "caseId": "C-0003",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-20T05:04:23.829Z",
+    "ownerTeam": "Support",
+    "valueEur": 11083
+  },
+  {
+    "caseId": "C-0016",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-20T06:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 51681
+  },
+  {
+    "caseId": "C-0038",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-20T06:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 7689
+  },
+  {
+    "caseId": "C-0011",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-02-20T17:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 20766
+  },
+  {
+    "caseId": "C-0032",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-21T08:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 28483
+  },
+  {
+    "caseId": "C-0017",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-21T10:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 48581
+  },
+  {
+    "caseId": "C-0024",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-21T10:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 28628
+  },
+  {
+    "caseId": "C-0003",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-21T13:04:23.829Z",
+    "ownerTeam": "Support",
+    "valueEur": 11083
+  },
+  {
+    "caseId": "C-0007",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-21T13:04:23.830Z",
+    "ownerTeam": "Approver",
+    "valueEur": 17071
+  },
+  {
+    "caseId": "C-0018",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-02-21T16:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 28588
+  },
+  {
+    "caseId": "C-0027",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-21T18:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 23712
+  },
+  {
+    "caseId": "C-0002",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-21T23:04:23.829Z",
+    "ownerTeam": "BDR",
+    "valueEur": 26521
+  },
+  {
+    "caseId": "C-0008",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-02-22T01:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 15350
+  },
+  {
+    "caseId": "C-0033",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-02-22T05:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 52952
+  },
+  {
+    "caseId": "C-0005",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-22T11:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 36172
+  },
+  {
+    "caseId": "C-0009",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-22T11:04:23.830Z",
+    "ownerTeam": "Approver",
+    "valueEur": 40423
+  },
+  {
+    "caseId": "C-0020",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-22T11:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 33359
+  },
+  {
+    "caseId": "C-0006",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-02-22T22:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 38970
+  },
+  {
+    "caseId": "C-0018",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-22T23:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 28588
+  },
+  {
+    "caseId": "C-0003",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-23T02:04:23.829Z",
+    "ownerTeam": "Support",
+    "valueEur": 11083
+  },
+  {
+    "caseId": "C-0027",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-23T03:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 23712
+  },
+  {
+    "caseId": "C-0022",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-02-23T13:04:23.830Z",
+    "ownerTeam": "Legal",
+    "valueEur": 60882
+  },
+  {
+    "caseId": "C-0024",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-23T13:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 28628
+  },
+  {
+    "caseId": "C-0015",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-02-23T14:04:23.830Z",
+    "ownerTeam": "Approver",
+    "valueEur": 24594
+  },
+  {
+    "caseId": "C-0021",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-02-23T15:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 31779
+  },
+  {
+    "caseId": "C-0025",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-23T16:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 20276
+  },
+  {
+    "caseId": "C-0013",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-23T21:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 21526
+  },
+  {
+    "caseId": "C-0030",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-23T21:04:23.831Z",
+    "ownerTeam": "CSM",
+    "valueEur": 5201
+  },
+  {
+    "caseId": "C-0036",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-23T21:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 45705
+  },
+  {
+    "caseId": "C-0008",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-24T02:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 15350
+  },
+  {
+    "caseId": "C-0016",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-24T03:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 51681
+  },
+  {
+    "caseId": "C-0001",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-24T04:04:23.808Z",
+    "ownerTeam": "Support",
+    "valueEur": 53043
+  },
+  {
+    "caseId": "C-0022",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-24T05:04:23.830Z",
+    "ownerTeam": "Legal",
+    "valueEur": 60882
+  },
+  {
+    "caseId": "C-0032",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-24T08:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 28483
+  },
+  {
+    "caseId": "C-0036",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-24T08:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 45705
+  },
+  {
+    "caseId": "C-0007",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-02-24T11:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 17071
+  },
+  {
+    "caseId": "C-0030",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-24T17:04:23.831Z",
+    "ownerTeam": "CSM",
+    "valueEur": 5201
+  },
+  {
+    "caseId": "C-0003",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-24T20:04:23.829Z",
+    "ownerTeam": "Support",
+    "valueEur": 11083
+  },
+  {
+    "caseId": "C-0036",
+    "processArea": "sales",
+    "eventType": "won",
+    "timestamp": "2026-02-24T22:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 45705
+  },
+  {
+    "caseId": "C-0002",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-02-25T01:04:23.829Z",
+    "ownerTeam": "AE",
+    "valueEur": 26521
+  },
+  {
+    "caseId": "C-0008",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-25T04:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 15350
+  },
+  {
+    "caseId": "C-0022",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-25T06:04:23.830Z",
+    "ownerTeam": "Legal",
+    "valueEur": 60882
+  },
+  {
+    "caseId": "C-0017",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-25T07:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 48581
+  },
+  {
+    "caseId": "C-0030",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-25T08:04:23.831Z",
+    "ownerTeam": "CSM",
+    "valueEur": 5201
+  },
+  {
+    "caseId": "C-0019",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-25T14:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 29305
+  },
+  {
+    "caseId": "C-0039",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-25T18:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 10908
+  },
+  {
+    "caseId": "C-0031",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-25T19:04:23.831Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 27653
+  },
+  {
+    "caseId": "C-0020",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-25T20:04:23.830Z",
+    "ownerTeam": "Legal",
+    "valueEur": 33359
+  },
+  {
+    "caseId": "C-0027",
+    "processArea": "procurement",
+    "eventType": "won",
+    "timestamp": "2026-02-26T00:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 23712
+  },
+  {
+    "caseId": "C-0015",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-26T02:04:23.830Z",
+    "ownerTeam": "Approver",
+    "valueEur": 24594
+  },
+  {
+    "caseId": "C-0005",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-26T06:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 36172
+  },
+  {
+    "caseId": "C-0017",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-26T08:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 48581
+  },
+  {
+    "caseId": "C-0025",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-26T09:04:23.831Z",
+    "ownerTeam": "CSM",
+    "valueEur": 20276
+  },
+  {
+    "caseId": "C-0024",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-26T15:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 28628
+  },
+  {
+    "caseId": "C-0007",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-26T16:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 17071
+  },
+  {
+    "caseId": "C-0040",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-26T17:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 25051
+  },
+  {
+    "caseId": "C-0010",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-26T19:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 45106
+  },
+  {
+    "caseId": "C-0031",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-02-26T19:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 27653
+  },
+  {
+    "caseId": "C-0018",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-26T23:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 28588
+  },
+  {
+    "caseId": "C-0021",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-27T00:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 31779
+  },
+  {
+    "caseId": "C-0016",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-27T02:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 51681
+  },
+  {
+    "caseId": "C-0002",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-27T03:04:23.829Z",
+    "ownerTeam": "Legal",
+    "valueEur": 26521
+  },
+  {
+    "caseId": "C-0015",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-27T06:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 24594
+  },
+  {
+    "caseId": "C-0013",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-27T07:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 21526
+  },
+  {
+    "caseId": "C-0009",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-02-27T10:04:23.830Z",
+    "ownerTeam": "Approver",
+    "valueEur": 40423
+  },
+  {
+    "caseId": "C-0012",
+    "processArea": "procurement",
+    "eventType": "won",
+    "timestamp": "2026-02-27T15:04:23.830Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 20228
+  },
+  {
+    "caseId": "C-0033",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-27T15:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 52952
+  },
+  {
+    "caseId": "C-0034",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-27T16:04:23.831Z",
+    "ownerTeam": "Finance",
+    "valueEur": 33662
+  },
+  {
+    "caseId": "C-0039",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-02-27T16:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 10908
+  },
+  {
+    "caseId": "C-0007",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-27T17:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 17071
+  },
+  {
+    "caseId": "C-0030",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-27T18:04:23.831Z",
+    "ownerTeam": "Support",
+    "valueEur": 5201
+  },
+  {
+    "caseId": "C-0024",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-27T19:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 28628
+  },
+  {
+    "caseId": "C-0019",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-27T22:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 29305
+  },
+  {
+    "caseId": "C-0033",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-28T00:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 52952
+  },
+  {
+    "caseId": "C-0014",
+    "processArea": "customer-success",
+    "eventType": "lead_created",
+    "timestamp": "2026-02-28T01:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 20700
+  },
+  {
+    "caseId": "C-0016",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-02-28T07:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 51681
+  },
+  {
+    "caseId": "C-0011",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-28T09:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 20766
+  },
+  {
+    "caseId": "C-0013",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-28T10:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 21526
+  },
+  {
+    "caseId": "C-0038",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-28T10:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 7689
+  },
+  {
+    "caseId": "C-0021",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-02-28T13:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 31779
+  },
+  {
+    "caseId": "C-0017",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-28T15:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 48581
+  },
+  {
+    "caseId": "C-0013",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-28T17:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 21526
+  },
+  {
+    "caseId": "C-0034",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-02-28T19:04:23.831Z",
+    "ownerTeam": "Finance",
+    "valueEur": 33662
+  },
+  {
+    "caseId": "C-0008",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-02-28T20:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 15350
+  },
+  {
+    "caseId": "C-0017",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-03-01T00:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 48581
+  },
+  {
+    "caseId": "C-0038",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-01T00:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 7689
+  },
+  {
+    "caseId": "C-0041",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-03-01T04:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 55650
+  },
+  {
+    "caseId": "C-0022",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-01T06:04:23.830Z",
+    "ownerTeam": "Legal",
+    "valueEur": 60882
+  },
+  {
+    "caseId": "C-0034",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-01T07:04:23.831Z",
+    "ownerTeam": "Finance",
+    "valueEur": 33662
+  },
+  {
+    "caseId": "C-0014",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-03-01T10:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 20700
+  },
+  {
+    "caseId": "C-0037",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-03-01T15:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 20762
+  },
+  {
+    "caseId": "C-0039",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-01T18:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 10908
+  },
+  {
+    "caseId": "C-0009",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-01T19:04:23.830Z",
+    "ownerTeam": "Approver",
+    "valueEur": 40423
+  },
+  {
+    "caseId": "C-0001",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-03-01T20:04:23.828Z",
+    "ownerTeam": "Support",
+    "valueEur": 53043
+  },
+  {
+    "caseId": "C-0005",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-01T21:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 36172
+  },
+  {
+    "caseId": "C-0011",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-02T00:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 20766
+  },
+  {
+    "caseId": "C-0018",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-02T04:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 28588
+  },
+  {
+    "caseId": "C-0025",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-03-02T08:04:23.831Z",
+    "ownerTeam": "Finance",
+    "valueEur": 20276
+  },
+  {
+    "caseId": "C-0013",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-03-02T10:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 21526
+  },
+  {
+    "caseId": "C-0037",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-03-02T16:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 20762
+  },
+  {
+    "caseId": "C-0021",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-02T18:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 31779
+  },
+  {
+    "caseId": "C-0041",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-03-02T18:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 55650
+  },
+  {
+    "caseId": "C-0002",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-02T20:04:23.829Z",
+    "ownerTeam": "AE",
+    "valueEur": 26521
+  },
+  {
+    "caseId": "C-0007",
+    "processArea": "procurement",
+    "eventType": "won",
+    "timestamp": "2026-03-02T21:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 17071
+  },
+  {
+    "caseId": "C-0005",
+    "processArea": "customer-success",
+    "eventType": "lost",
+    "timestamp": "2026-03-02T22:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 36172
+  },
+  {
+    "caseId": "C-0019",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-03-03T05:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 29305
+  },
+  {
+    "caseId": "C-0015",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-03T10:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 24594
+  },
+  {
+    "caseId": "C-0033",
+    "processArea": "procurement",
+    "eventType": "won",
+    "timestamp": "2026-03-03T13:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 52952
+  },
+  {
+    "caseId": "C-0035",
+    "processArea": "procurement",
+    "eventType": "lead_created",
+    "timestamp": "2026-03-03T13:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 15359
+  },
+  {
+    "caseId": "C-0002",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-03T14:04:23.829Z",
+    "ownerTeam": "AE",
+    "valueEur": 26521
+  },
+  {
+    "caseId": "C-0009",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-03T18:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 40423
+  },
+  {
+    "caseId": "C-0011",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-03T20:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 20766
+  },
+  {
+    "caseId": "C-0038",
+    "processArea": "sales",
+    "eventType": "won",
+    "timestamp": "2026-03-03T21:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 7689
+  },
+  {
+    "caseId": "C-0010",
+    "processArea": "customer-success",
+    "eventType": "qualified",
+    "timestamp": "2026-03-04T06:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 45106
+  },
+  {
+    "caseId": "C-0015",
+    "processArea": "procurement",
+    "eventType": "won",
+    "timestamp": "2026-03-04T10:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 24594
+  },
+  {
+    "caseId": "C-0018",
+    "processArea": "sales",
+    "eventType": "won",
+    "timestamp": "2026-03-04T14:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 28588
+  },
+  {
+    "caseId": "C-0024",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-04T14:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 28628
+  },
+  {
+    "caseId": "C-0029",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-03-04T15:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 55644
+  },
+  {
+    "caseId": "C-0041",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-04T15:04:23.831Z",
+    "ownerTeam": "BDR",
+    "valueEur": 55650
+  },
+  {
+    "caseId": "C-0023",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-03-04T18:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 26238
+  },
+  {
+    "caseId": "C-0034",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-04T22:04:23.831Z",
+    "ownerTeam": "Finance",
+    "valueEur": 33662
+  },
+  {
+    "caseId": "C-0014",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-05T00:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 20700
+  },
+  {
+    "caseId": "C-0035",
+    "processArea": "procurement",
+    "eventType": "qualified",
+    "timestamp": "2026-03-05T02:04:23.831Z",
+    "ownerTeam": "Approver",
+    "valueEur": 15359
+  },
+  {
+    "caseId": "C-0042",
+    "processArea": "sales",
+    "eventType": "lead_created",
+    "timestamp": "2026-03-05T04:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 21474
+  },
+  {
+    "caseId": "C-0011",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-05T07:04:23.830Z",
+    "ownerTeam": "AE",
+    "valueEur": 20766
+  },
+  {
+    "caseId": "C-0001",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-05T11:04:23.829Z",
+    "ownerTeam": "Support",
+    "valueEur": 53043
+  },
+  {
+    "caseId": "C-0002",
+    "processArea": "sales",
+    "eventType": "won",
+    "timestamp": "2026-03-05T11:04:23.829Z",
+    "ownerTeam": "AE",
+    "valueEur": 26521
+  },
+  {
+    "caseId": "C-0039",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-05T14:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 10908
+  },
+  {
+    "caseId": "C-0037",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-06T00:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 20762
+  },
+  {
+    "caseId": "C-0040",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-03-06T02:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 25051
+  },
+  {
+    "caseId": "C-0039",
+    "processArea": "procurement",
+    "eventType": "won",
+    "timestamp": "2026-03-06T04:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 10908
+  },
+  {
+    "caseId": "C-0042",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-03-06T07:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 21474
+  },
+  {
+    "caseId": "C-0021",
+    "processArea": "sales",
+    "eventType": "won",
+    "timestamp": "2026-03-06T09:04:23.830Z",
+    "ownerTeam": "Legal",
+    "valueEur": 31779
+  },
+  {
+    "caseId": "C-0029",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-03-06T22:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 55644
+  },
+  {
+    "caseId": "C-0014",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-07T01:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 20700
+  },
+  {
+    "caseId": "C-0001",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-07T08:04:23.829Z",
+    "ownerTeam": "CSM",
+    "valueEur": 53043
+  },
+  {
+    "caseId": "C-0031",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-07T13:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 27653
+  },
+  {
+    "caseId": "C-0008",
+    "processArea": "procurement",
+    "eventType": "won",
+    "timestamp": "2026-03-07T16:04:23.830Z",
+    "ownerTeam": "Requester",
+    "valueEur": 15350
+  },
+  {
+    "caseId": "C-0010",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-07T22:04:23.830Z",
+    "ownerTeam": "Finance",
+    "valueEur": 45106
+  },
+  {
+    "caseId": "C-0010",
+    "processArea": "customer-success",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-08T02:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 45106
+  },
+  {
+    "caseId": "C-0024",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-03-08T06:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 28628
+  },
+  {
+    "caseId": "C-0029",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-08T07:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 55644
+  },
+  {
+    "caseId": "C-0023",
+    "processArea": "sales",
+    "eventType": "qualified",
+    "timestamp": "2026-03-08T08:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 26238
+  },
+  {
+    "caseId": "C-0030",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-03-08T08:04:23.831Z",
+    "ownerTeam": "Support",
+    "valueEur": 5201
+  },
+  {
+    "caseId": "C-0041",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T10:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 55650
+  },
+  {
+    "caseId": "C-0001",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.829Z",
+    "ownerTeam": "Finance",
+    "valueEur": 53043
+  },
+  {
+    "caseId": "C-0001",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-03-08T11:04:23.829Z",
+    "ownerTeam": "Finance",
+    "valueEur": 53043
+  },
+  {
+    "caseId": "C-0009",
+    "processArea": "procurement",
+    "eventType": "won",
+    "timestamp": "2026-03-08T11:04:23.830Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 40423
+  },
+  {
+    "caseId": "C-0010",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 45106
+  },
+  {
+    "caseId": "C-0010",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-03-08T11:04:23.830Z",
+    "ownerTeam": "CSM",
+    "valueEur": 45106
+  },
+  {
+    "caseId": "C-0014",
+    "processArea": "customer-success",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 20700
+  },
+  {
+    "caseId": "C-0014",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-03-08T11:04:23.830Z",
+    "ownerTeam": "Support",
+    "valueEur": 20700
+  },
+  {
+    "caseId": "C-0023",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-08T11:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 26238
+  },
+  {
+    "caseId": "C-0023",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 26238
+  },
+  {
+    "caseId": "C-0023",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.830Z",
+    "ownerTeam": "BDR",
+    "valueEur": 26238
+  },
+  {
+    "caseId": "C-0029",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 55644
+  },
+  {
+    "caseId": "C-0029",
+    "processArea": "sales",
+    "eventType": "won",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 55644
+  },
+  {
+    "caseId": "C-0031",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 27653
+  },
+  {
+    "caseId": "C-0031",
+    "processArea": "procurement",
+    "eventType": "won",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Requester",
+    "valueEur": 27653
+  },
+  {
+    "caseId": "C-0034",
+    "processArea": "customer-success",
+    "eventType": "won",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Finance",
+    "valueEur": 33662
+  },
+  {
+    "caseId": "C-0035",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 15359
+  },
+  {
+    "caseId": "C-0035",
+    "processArea": "procurement",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 15359
+  },
+  {
+    "caseId": "C-0035",
+    "processArea": "procurement",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 15359
+  },
+  {
+    "caseId": "C-0035",
+    "processArea": "procurement",
+    "eventType": "won",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Buyer",
+    "valueEur": 15359
+  },
+  {
+    "caseId": "C-0037",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 20762
+  },
+  {
+    "caseId": "C-0037",
+    "processArea": "sales",
+    "eventType": "lost",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 20762
+  },
+  {
+    "caseId": "C-0040",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 25051
+  },
+  {
+    "caseId": "C-0040",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 25051
+  },
+  {
+    "caseId": "C-0040",
+    "processArea": "sales",
+    "eventType": "won",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "BDR",
+    "valueEur": 25051
+  },
+  {
+    "caseId": "C-0041",
+    "processArea": "sales",
+    "eventType": "won",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "Legal",
+    "valueEur": 55650
+  },
+  {
+    "caseId": "C-0042",
+    "processArea": "sales",
+    "eventType": "proposal_sent",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 21474
+  },
+  {
+    "caseId": "C-0042",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "AE",
+    "valueEur": 21474
+  },
+  {
+    "caseId": "C-0042",
+    "processArea": "sales",
+    "eventType": "negotiation",
+    "timestamp": "2026-03-08T11:04:23.831Z",
+    "ownerTeam": "BDR",
+    "valueEur": 21474
+  }
+]

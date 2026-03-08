@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Process Leak Detector</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header class="hero">
+        <p class="eyebrow">IMIS Project MVP</p>
+        <h1>Process Leak Detector</h1>
+        <p class="subtitle">
+          Detect where operations leak value and convert it into business transformation actions.
+        </p>
+        <p id="dataset-tag" class="dataset-tag"></p>
+      </header>
+
+      <section class="card">
+        <h2>Executive Summary</h2>
+        <div id="kpi-grid" class="kpi-grid"></div>
+      </section>
+
+      <section class="two-col">
+        <article class="card">
+          <h2>Leak Breakdown</h2>
+          <div id="leak-breakdown"></div>
+        </article>
+        <article class="card">
+          <h2>Top Leakage Drivers</h2>
+          <div id="bottlenecks"></div>
+        </article>
+      </section>
+
+      <section class="card">
+        <h2>Recommended Transformation Actions</h2>
+        <ol id="recommendations" class="reco-list"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Top Risk Entities</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Entity</th>
+                <th>Segment</th>
+                <th>Status</th>
+                <th>Primary Driver</th>
+                <th>Leak Score</th>
+                <th>Leak (EUR)</th>
+                <th>Value (EUR)</th>
+              </tr>
+            </thead>
+            <tbody id="case-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
