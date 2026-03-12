@@ -131,6 +131,16 @@ h2 {
   margin: 0 0 0.6rem;
 }
 
+h1 {
+  font-size: clamp(2rem, 3vw, 3rem);
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: clamp(1.2rem, 2.1vw, 1.6rem);
+  letter-spacing: -0.01em;
+}
+
 .subtitle {
   margin: 0.2rem 0 0;
   color: var(--muted);
@@ -166,6 +176,66 @@ h2 {
 
 .card:hover::before {
   opacity: 1;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1.2rem;
+}
+
+.btn {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.btn:focus-visible {
+  outline: 2px solid rgba(94, 234, 212, 0.7);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--primary), var(--primary-strong));
+  color: #05191f;
+  box-shadow: var(--glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glow), 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-ghost:hover {
+  transform: translateY(-2px);
+  border-color: rgba(94, 234, 212, 0.5);
+}
+
+.trust-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.trust-pill {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .two-col {

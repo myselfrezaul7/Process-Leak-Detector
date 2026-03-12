@@ -165,6 +165,21 @@ async function run() {
   renderRecommendations(report.recommendations || []);
   renderCaseTable(report.cases || []);
   document.body.classList.add("ready");
+
+  const summaryBtn = document.querySelector('[data-action="jump-summary"]');
+  const recosBtn = document.querySelector('[data-action="jump-recos"]');
+  if (summaryBtn) {
+    summaryBtn.addEventListener("click", () => {
+      const target = document.getElementById("summary");
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+  if (recosBtn) {
+    recosBtn.addEventListener("click", () => {
+      const target = document.getElementById("recommendations");
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 }
 
 run().catch((err) => {

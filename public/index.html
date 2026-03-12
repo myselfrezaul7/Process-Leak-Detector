@@ -15,9 +15,18 @@
           Detect where operations leak value and convert it into business transformation actions.
         </p>
         <p id="dataset-tag" class="dataset-tag"></p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" type="button" data-action="jump-summary">See the impact</button>
+          <button class="btn btn-ghost" type="button" data-action="jump-recos">View recommendations</button>
+        </div>
+        <div class="trust-row" aria-label="Trust signals">
+          <div class="trust-pill">Uses real Rossmann data</div>
+          <div class="trust-pill">1115 stores analyzed</div>
+          <div class="trust-pill">No setup required</div>
+        </div>
       </header>
 
-      <section class="card">
+      <section class="card" id="summary">
         <h2>Executive Summary</h2>
         <div id="kpi-grid" class="kpi-grid"></div>
       </section>
@@ -33,7 +42,7 @@
         </article>
       </section>
 
-      <section class="card">
+      <section class="card" id="recommendations">
         <h2>Recommended Transformation Actions</h2>
         <ol id="recommendations" class="reco-list"></ol>
       </section>
