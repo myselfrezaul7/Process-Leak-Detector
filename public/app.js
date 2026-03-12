@@ -16,6 +16,24 @@ function renderDatasetTag(report) {
   tag.textContent = `Dataset: ${dataset}`;
 }
 
+function renderTrustPills(report) {
+  const dataset = report.dataset || "dataset";
+  const trustDataset = document.getElementById("trust-dataset");
+  const trustStores = document.getElementById("trust-stores");
+  const trustPeriod = document.getElementById("trust-period");
+  const summary = report.summary || {};
+
+  if (trustDataset) {
+    trustDataset.textContent = `Using ${dataset.replace("-", " ")} data`;
+  }
+  if (trustStores && summary.totalStores) {
+    trustStores.textContent = `${number(summary.totalStores)} stores analyzed`;
+  }
+  if (trustPeriod && summary.periodStart && summary.periodEnd) {
+    trustPeriod.textContent = `${summary.periodStart} to ${summary.periodEnd}`;
+  }
+}
+
 function fallbackKpis(summary) {
   return [
     ["Total cases", number(summary.totalCases)],
@@ -159,6 +177,7 @@ async function run() {
   const report = await res.json();
 
   renderDatasetTag(report);
+  renderTrustPills(report);
   renderKpis(report);
   renderLeakBreakdown(report.summary || {});
   renderBottlenecks(report.bottlenecks || []);

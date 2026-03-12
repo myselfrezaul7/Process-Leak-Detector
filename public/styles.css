@@ -25,6 +25,7 @@ body {
   font-family: "Space Grotesk", "Inter", system-ui, -apple-system, sans-serif;
   color: var(--text);
   min-height: 100vh;
+  line-height: 1.6;
   background:
     radial-gradient(circle at 15% 20%, rgba(94, 234, 212, 0.18), transparent 30%),
     radial-gradient(circle at 85% 10%, rgba(34, 211, 238, 0.12), transparent 28%),
@@ -66,6 +67,24 @@ body::after {
   gap: 1.2rem;
   position: relative;
   z-index: 1;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  background: #0b1b2e;
+  color: var(--text);
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(94, 234, 212, 0.4);
+  text-decoration: none;
+  transition: transform 160ms ease;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  transform: translateY(5rem);
 }
 
 .hero {
@@ -146,6 +165,12 @@ h2 {
   color: var(--muted);
   max-width: 780px;
   line-height: 1.5;
+}
+
+.helper {
+  margin: 0 0 0.8rem;
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .card {
@@ -366,9 +391,36 @@ th {
   border: 1px solid rgba(248, 113, 113, 0.35);
 }
 
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 @media (min-width: 860px) {
   .two-col {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

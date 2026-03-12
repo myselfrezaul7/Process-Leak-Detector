@@ -7,50 +7,56 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main class="layout">
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <main class="layout" id="main">
       <header class="hero">
         <p class="eyebrow">IMIS Project MVP</p>
         <h1>Process Leak Detector</h1>
         <p class="subtitle">
           Detect where operations leak value and convert it into business transformation actions.
         </p>
-        <p id="dataset-tag" class="dataset-tag"></p>
+        <p id="dataset-tag" class="dataset-tag" role="status" aria-live="polite"></p>
         <div class="hero-actions">
           <button class="btn btn-primary" type="button" data-action="jump-summary">See the impact</button>
           <button class="btn btn-ghost" type="button" data-action="jump-recos">View recommendations</button>
         </div>
         <div class="trust-row" aria-label="Trust signals">
-          <div class="trust-pill">Uses real Rossmann data</div>
-          <div class="trust-pill">1115 stores analyzed</div>
-          <div class="trust-pill">No setup required</div>
+          <div class="trust-pill" id="trust-dataset">Uses real Rossmann data</div>
+          <div class="trust-pill" id="trust-stores">Stores analyzed</div>
+          <div class="trust-pill" id="trust-period">Period coverage</div>
         </div>
       </header>
 
       <section class="card" id="summary">
         <h2>Executive Summary</h2>
+        <p class="helper">A quick snapshot of value leakage and operational exposure.</p>
         <div id="kpi-grid" class="kpi-grid"></div>
       </section>
 
       <section class="two-col">
         <article class="card">
           <h2>Leak Breakdown</h2>
+          <p class="helper">Compare where leakage concentrates by driver.</p>
           <div id="leak-breakdown"></div>
         </article>
         <article class="card">
           <h2>Top Leakage Drivers</h2>
+          <p class="helper">The highest-pressure drivers to tackle first.</p>
           <div id="bottlenecks"></div>
         </article>
       </section>
 
       <section class="card" id="recommendations">
         <h2>Recommended Transformation Actions</h2>
+        <p class="helper">Prioritized actions designed to recover the fastest impact.</p>
         <ol id="recommendations" class="reco-list"></ol>
       </section>
 
       <section class="card">
         <h2>Top Risk Entities</h2>
+        <p class="helper">Focus teams on the stores with the highest leakage and opportunity.</p>
         <div class="table-wrap">
-          <table>
+          <table aria-label="Top risk entities table">
             <thead>
               <tr>
                 <th>Entity</th>
