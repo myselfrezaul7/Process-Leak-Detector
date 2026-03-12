@@ -1,4 +1,4 @@
-const http = require("http");
+﻿const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { readEvents, aggregate } = require("./src/analytics");
@@ -131,3 +131,4 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`Process Leak Detector running on http://localhost:${PORT}`);
 });
+

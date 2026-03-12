@@ -1,4 +1,4 @@
-# Process Leak Detector (IMIS MVP)
+﻿# Process Leak Detector (IMIS MVP)
 
 Process Leak Detector identifies where business workflows lose value, then surfaces practical transformation actions.
 
@@ -47,3 +47,4 @@ node server.js
 2. Add per-store action plans with expected savings simulation.
 3. Add automatic anomaly alerts for sudden leak spikes.
 4. Add user roles: executive summary, operations detail, store manager view.
+

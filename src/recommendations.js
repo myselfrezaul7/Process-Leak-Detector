@@ -1,4 +1,4 @@
-function createRecommendations(report) {
+﻿function createRecommendations(report) {
   const { summary, bottlenecks, cases } = report;
   const recommendations = [];
 
@@ -66,3 +66,4 @@ function createRecommendations(report) {
 module.exports = {
   createRecommendations
 };
+

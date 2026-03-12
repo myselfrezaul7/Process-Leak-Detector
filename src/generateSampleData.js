@@ -1,4 +1,4 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 
 function mulberry32(seed) {
@@ -103,3 +103,4 @@ allEvents.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 const outPath = path.join(__dirname, "..", "data", "events.json");
 fs.writeFileSync(outPath, JSON.stringify(allEvents, null, 2));
 console.log(`Generated ${allEvents.length} events into ${outPath}`);
+

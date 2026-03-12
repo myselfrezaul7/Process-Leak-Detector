@@ -1,4 +1,4 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 
 const config = {
@@ -222,3 +222,4 @@ module.exports = {
   readEvents,
   aggregate
 };
+

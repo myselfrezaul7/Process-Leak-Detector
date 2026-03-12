@@ -1,4 +1,4 @@
-function eur(value) {
+ï»¿function eur(value) {
   return new Intl.NumberFormat("de-DE", {
     style: "currency",
     currency: "EUR",
@@ -61,7 +61,7 @@ function renderLeakBreakdown(summary) {
       const width = Math.round((value / max) * 100);
       return `
         <div class="bar-item">
-          <div><strong>${label}</strong> · ${eur(value)}</div>
+          <div><strong>${label}</strong> Â· ${eur(value)}</div>
           <div class="bar-line"><div class="bar-fill" style="width:${width}%"></div></div>
         </div>
       `;
@@ -89,7 +89,7 @@ function renderBottlenecks(bottlenecks) {
 
       return `
       <div class="bar-item">
-        <div><strong>${label}</strong> · ${suffix}</div>
+        <div><strong>${label}</strong> Â· ${suffix}</div>
         <div class="bar-line"><div class="bar-fill" style="width:${width}%"></div></div>
       </div>
     `;
@@ -164,8 +164,11 @@ async function run() {
   renderBottlenecks(report.bottlenecks || []);
   renderRecommendations(report.recommendations || []);
   renderCaseTable(report.cases || []);
+  document.body.classList.add("ready");
 }
 
 run().catch((err) => {
   document.body.innerHTML = `<pre>Failed to load report:\n${err.message}</pre>`;
 });
+
+
