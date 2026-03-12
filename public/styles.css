@@ -217,6 +217,10 @@ h2 {
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
@@ -263,6 +267,33 @@ h2 {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.insights-ribbon {
+  margin-top: 1.4rem;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.insight-card {
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(94, 234, 212, 0.2);
+  box-shadow: var(--shadow);
+}
+
+.insight-label {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.insight-value {
+  margin: 0.35rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
 .two-col {
   display: grid;
   gap: 1.1rem;
@@ -298,6 +329,66 @@ h2 {
   font-size: 1.28rem;
   font-weight: 700;
   color: #e9fbf7;
+}
+
+.mini-graph {
+  margin-top: 1.2rem;
+  padding: 0.8rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mini-graph-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.7rem;
+}
+
+.mini-graph-note {
+  font-size: 0.78rem;
+}
+
+.mini-graph-bars {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mini-graph-bar {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.mini-graph-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.mini-graph-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-strong));
+  animation: growBar 900ms ease forwards;
+}
+
+.mini-graph-value {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+@keyframes growBar {
+  from { width: 0; }
+  to { width: 100%; }
 }
 
 .bar-list {
@@ -410,6 +501,15 @@ tbody tr:hover {
   .btn {
     width: 100%;
     text-align: center;
+  }
+
+  .mini-graph-bar {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+
+  .mini-graph-value {
+    justify-self: end;
   }
 }
 

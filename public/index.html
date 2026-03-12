@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Process Leak Detector</title>
+    <meta name="description" content="Detect where operations leak value and prioritize transformation actions." />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -25,12 +26,33 @@
           <div class="trust-pill" id="trust-stores">Stores analyzed</div>
           <div class="trust-pill" id="trust-period">Period coverage</div>
         </div>
+        <div class="insights-ribbon" aria-label="Key insights">
+          <div class="insight-card">
+            <p class="insight-label">Value at risk</p>
+            <p class="insight-value" id="insight-risk">Loading...</p>
+          </div>
+          <div class="insight-card">
+            <p class="insight-label">Primary driver</p>
+            <p class="insight-value" id="insight-driver">Loading...</p>
+          </div>
+          <div class="insight-card">
+            <p class="insight-label">Stores in focus</p>
+            <p class="insight-value" id="insight-focus">Loading...</p>
+          </div>
+        </div>
       </header>
 
       <section class="card" id="summary">
         <h2>Executive Summary</h2>
         <p class="helper">A quick snapshot of value leakage and operational exposure.</p>
         <div id="kpi-grid" class="kpi-grid"></div>
+        <div class="mini-graph">
+          <div class="mini-graph-header">
+            <span>Leakage overview</span>
+            <span class="mini-graph-note">Relative size by driver</span>
+          </div>
+          <div id="overview-graph" class="mini-graph-bars" aria-label="Leakage overview chart"></div>
+        </div>
       </section>
 
       <section class="two-col">

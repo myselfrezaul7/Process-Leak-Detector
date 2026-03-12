@@ -34,6 +34,54 @@ function renderTrustPills(report) {
   }
 }
 
+function renderInsights(report) {
+  const summary = report.summary || {};
+  const riskEl = document.getElementById("insight-risk");
+  const driverEl = document.getElementById("insight-driver");
+  const focusEl = document.getElementById("insight-focus");
+
+  if (riskEl) {
+    riskEl.textContent = summary.estimatedLeakEur
+      ? `${eur(summary.estimatedLeakEur)} in leakage`
+      : "Leakage estimate pending";
+  }
+  if (driverEl) {
+    driverEl.textContent = summary.topLeakArea ? summary.topLeakArea : "Top driver pending";
+  }
+  if (focusEl) {
+    const focusCount = (summary.riskStores || 0) + (summary.criticalStores || 0);
+    focusEl.textContent = focusCount ? `${number(focusCount)} stores in focus` : "Focus list pending";
+  }
+}
+
+function renderOverviewGraph(summary) {
+  const container = document.getElementById("overview-graph");
+  if (!container) return;
+
+  const leaks = summary.leakByType || {};
+  const entries = Object.entries(leaks);
+  if (!entries.length) {
+    container.textContent = "No leakage data available.";
+    return;
+  }
+
+  const max = Math.max(...entries.map(([, v]) => v), 1);
+  container.innerHTML = entries
+    .map(([label, value]) => {
+      const width = Math.round((value / max) * 100);
+      return `
+        <div class="mini-graph-bar">
+          <span>${label}</span>
+          <div class="mini-graph-track">
+            <div class="mini-graph-fill" style="width:${width}%"></div>
+          </div>
+          <span class="mini-graph-value">${eur(value)}</span>
+        </div>
+      `;
+    })
+    .join("");
+}
+
 function fallbackKpis(summary) {
   return [
     ["Total cases", number(summary.totalCases)],
@@ -178,7 +226,9 @@ async function run() {
 
   renderDatasetTag(report);
   renderTrustPills(report);
+  renderInsights(report);
   renderKpis(report);
+  renderOverviewGraph(report.summary || {});
   renderLeakBreakdown(report.summary || {});
   renderBottlenecks(report.bottlenecks || []);
   renderRecommendations(report.recommendations || []);
