@@ -68,10 +68,108 @@
         </article>
       </section>
 
+      <section class="card" id="command-center">
+        <h2>Live Command Center</h2>
+        <p class="helper">Real-time pulse of current leakage pressure and active alerts.</p>
+        <div class="live-strip">
+          <div class="live-metric">
+            <span class="live-label">Money leaking now</span>
+            <strong id="live-money">Loading...</strong>
+          </div>
+          <div class="live-metric">
+            <span class="live-label">Leak rate / min</span>
+            <strong id="live-rate">Loading...</strong>
+          </div>
+          <div class="live-metric">
+            <span class="live-label">Active alerts</span>
+            <strong id="live-alerts">Loading...</strong>
+          </div>
+        </div>
+        <div id="alert-feed" class="alert-feed" aria-live="polite"></div>
+      </section>
+
+      <section class="two-col">
+        <article class="card">
+          <h2>What-If Simulator</h2>
+          <p class="helper">Adjust transformation levers and preview recovered value instantly.</p>
+          <div class="sim-control">
+            <label for="sim-promo">Promo intensity (%)</label>
+            <input id="sim-promo" type="range" min="-30" max="40" value="10" />
+            <span id="sim-promo-value">10%</span>
+          </div>
+          <div class="sim-control">
+            <label for="sim-closure">Closure reduction (%)</label>
+            <input id="sim-closure" type="range" min="-40" max="40" value="10" />
+            <span id="sim-closure-value">10%</span>
+          </div>
+          <div class="sim-control">
+            <label for="sim-conversion">Conversion lift (%)</label>
+            <input id="sim-conversion" type="range" min="-30" max="40" value="12" />
+            <span id="sim-conversion-value">12%</span>
+          </div>
+          <div id="sim-output" class="sim-output">Loading scenario...</div>
+        </article>
+        <article class="card">
+          <h2>AI Copilot for Executives</h2>
+          <p class="helper">Ask business questions and get decision-ready answers.</p>
+          <div class="copilot-shell">
+            <label for="copilot-q" class="sr-only">Ask the copilot</label>
+            <input id="copilot-q" type="text" placeholder="Why is leakage rising this month?" />
+            <button class="btn btn-primary" id="copilot-ask" type="button">Ask</button>
+          </div>
+          <div id="copilot-answer" class="copilot-answer" aria-live="polite">
+            Ask a question to get a business summary.
+          </div>
+        </article>
+      </section>
+
       <section class="card" id="recommendations">
         <h2>Recommended Transformation Actions</h2>
         <p class="helper">Prioritized actions designed to recover the fastest impact.</p>
-        <ol id="recommendations" class="reco-list"></ol>
+        <ol id="recommendation-list" class="reco-list"></ol>
+      </section>
+
+      <section class="two-col">
+        <article class="card">
+          <h2>Geo-Intelligence Layer</h2>
+          <p class="helper">Spatial heat view of leakage hotspots by entity.</p>
+          <div id="geo-grid" class="geo-grid" aria-label="Geo intelligence heat grid"></div>
+        </article>
+        <article class="card">
+          <h2>Risk Radar Timeline</h2>
+          <p class="helper">30-day forward leakage projection with confidence.</p>
+          <div id="forecast-list" class="forecast-list"></div>
+        </article>
+      </section>
+
+      <section class="two-col">
+        <article class="card">
+          <h2>Intervention Tracking Loop</h2>
+          <p class="helper">Track expected vs actual uplift with owner accountability.</p>
+          <div class="intervention-form">
+            <input id="int-owner" type="text" placeholder="Owner (e.g., Ops Lead)" />
+            <input id="int-action" type="text" placeholder="Action (e.g., Rework promo flow)" />
+            <input id="int-expected" type="number" placeholder="Expected uplift EUR" />
+            <button class="btn btn-ghost" id="int-add" type="button">Add intervention</button>
+          </div>
+          <div id="intervention-list" class="intervention-list"></div>
+        </article>
+        <article class="card">
+          <h2>Auto Story Generator</h2>
+          <p class="helper">Board-ready narrative summary generated from the current report.</p>
+          <ul id="story-list" class="reco-list"></ul>
+        </article>
+      </section>
+
+      <section class="card">
+        <h2>Role-Based Experience</h2>
+        <p class="helper">Switch perspectives for CEO, Ops Lead, or Store Manager.</p>
+        <div class="role-switch" role="tablist" aria-label="Role mode">
+          <button class="btn btn-ghost role-btn active" data-role="ceo" type="button">CEO</button>
+          <button class="btn btn-ghost role-btn" data-role="ops" type="button">Ops Lead</button>
+          <button class="btn btn-ghost role-btn" data-role="store" type="button">Store Manager</button>
+        </div>
+        <div id="role-summary" class="role-summary"></div>
       </section>
 
       <section class="card">

@@ -82,6 +82,165 @@ function renderOverviewGraph(summary) {
     .join("");
 }
 
+function renderLive(snapshot) {
+  const money = document.getElementById("live-money");
+  const rate = document.getElementById("live-rate");
+  const alerts = document.getElementById("live-alerts");
+  const feed = document.getElementById("alert-feed");
+  if (money) money.textContent = eur(snapshot.moneyLeakingNow || 0);
+  if (rate) rate.textContent = eur(snapshot.leakRatePerMin || 0);
+  if (alerts) alerts.textContent = number(snapshot.activeAlerts || 0);
+  if (feed) {
+    feed.innerHTML = (snapshot.alerts || [])
+      .map(
+        (a) => `<div class="alert-item ${a.severity || "low"}"><strong>${a.severity || "low"}</strong> · ${a.title}</div>`
+      )
+      .join("");
+  }
+}
+
+function renderSimulation(data) {
+  const out = document.getElementById("sim-output");
+  if (!out) return;
+  out.innerHTML =
+    `<strong>Projected leak:</strong> ${eur(data.projectedLeakEur)} · ` +
+    `<strong>Recovered:</strong> ${eur(data.recoveredEur)} · ` +
+    `<strong>ROI score:</strong> ${data.roiScore}%`;
+}
+
+function updateSliderValues() {
+  const ids = ["promo", "closure", "conversion"];
+  ids.forEach((id) => {
+    const input = document.getElementById(`sim-${id}`);
+    const label = document.getElementById(`sim-${id}-value`);
+    if (input && label) label.textContent = `${input.value}%`;
+  });
+}
+
+async function refreshSimulation() {
+  const promo = document.getElementById("sim-promo");
+  const closure = document.getElementById("sim-closure");
+  const conversion = document.getElementById("sim-conversion");
+  if (!promo || !closure || !conversion) return;
+  updateSliderValues();
+  const qs = `promo=${promo.value}&closure=${closure.value}&conversion=${conversion.value}`;
+  const res = await fetch(`/api/simulate?${qs}`);
+  const data = await res.json();
+  renderSimulation(data);
+}
+
+function colorForLeak(value, max) {
+  const ratio = max > 0 ? value / max : 0;
+  const green = Math.round(220 - ratio * 140);
+  const red = Math.round(80 + ratio * 160);
+  return `rgb(${red}, ${green}, 180)`;
+}
+
+function renderGeoGrid(points) {
+  const grid = document.getElementById("geo-grid");
+  if (!grid) return;
+  const max = Math.max(...points.map((p) => p.leakEur || 0), 1);
+  grid.innerHTML = points
+    .slice(0, 100)
+    .map((p) => {
+      const color = colorForLeak(p.leakEur || 0, max);
+      const title = `${p.id}: ${eur(p.leakEur || 0)}`;
+      return `<div class="geo-cell" title="${title}" style="background:${color}"></div>`;
+    })
+    .join("");
+}
+
+function renderForecast(points) {
+  const list = document.getElementById("forecast-list");
+  if (!list) return;
+  const max = Math.max(...points.map((p) => p.projectedLeakEur || 0), 1);
+  list.innerHTML = points
+    .map((p) => {
+      const width = Math.max(6, Math.round((p.projectedLeakEur / max) * 100));
+      return `
+        <div class="forecast-item">
+          <span>Day ${p.day}</span>
+          <div class="forecast-band" style="width:${width}%"></div>
+          <span>${eur(p.projectedLeakEur)}</span>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function renderStory(story) {
+  const list = document.getElementById("story-list");
+  if (!list) return;
+  list.innerHTML = (story.bullets || []).map((b) => `<li>${b}</li>`).join("");
+}
+
+function renderRoleSummary(role, summary) {
+  const el = document.getElementById("role-summary");
+  if (!el) return;
+  if (role === "ceo") {
+    el.innerHTML = `CEO view: leakage exposure is <strong>${eur(summary.estimatedLeakEur || 0)}</strong>; prioritize top driver and weekly ROI tracking.`;
+    return;
+  }
+  if (role === "ops") {
+    el.innerHTML = `Ops view: focus on <strong>${number((summary.riskStores || 0) + (summary.criticalStores || 0))}</strong> high-risk entities and top 3 bottlenecks first.`;
+    return;
+  }
+  el.innerHTML = "Store manager view: focus on daily execution, promo quality, and prevent avoidable closure days.";
+}
+
+async function askCopilot() {
+  const input = document.getElementById("copilot-q");
+  const out = document.getElementById("copilot-answer");
+  if (!input || !out) return;
+  const q = encodeURIComponent(input.value || "");
+  const res = await fetch(`/api/copilot?q=${q}`);
+  const data = await res.json();
+  out.textContent = data.answer || "No answer available.";
+}
+
+function renderInterventions(items) {
+  const list = document.getElementById("intervention-list");
+  if (!list) return;
+  if (!items.length) {
+    list.textContent = "No interventions yet. Add your first action above.";
+    return;
+  }
+  list.innerHTML = items
+    .slice(0, 8)
+    .map(
+      (i) =>
+        `<div class="intervention-item"><strong>${i.action}</strong> · owner: ${i.owner} · expected: ${eur(i.expectedUpliftEur || 0)} · status: ${i.status}</div>`
+    )
+    .join("");
+}
+
+async function refreshInterventions() {
+  const res = await fetch("/api/interventions");
+  const items = await res.json();
+  renderInterventions(items);
+}
+
+async function addIntervention() {
+  const owner = document.getElementById("int-owner");
+  const action = document.getElementById("int-action");
+  const expected = document.getElementById("int-expected");
+  if (!owner || !action || !expected) return;
+  await fetch("/api/interventions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      owner: owner.value || "Unassigned",
+      action: action.value || "Intervention",
+      expectedUpliftEur: Number(expected.value || 0),
+      status: "planned"
+    })
+  });
+  owner.value = "";
+  action.value = "";
+  expected.value = "";
+  await refreshInterventions();
+}
+
 function fallbackKpis(summary) {
   return [
     ["Total cases", number(summary.totalCases)],
@@ -166,8 +325,10 @@ function renderBottlenecks(bottlenecks) {
 }
 
 function renderRecommendations(recommendations) {
+  const list = document.getElementById("recommendation-list");
+  if (!list) return;
   if (!recommendations || !recommendations.length) {
-    document.getElementById("recommendations").innerHTML = "<li>No recommendations yet.</li>";
+    list.innerHTML = "<li>No recommendations yet.</li>";
     return;
   }
 
@@ -183,7 +344,7 @@ function renderRecommendations(recommendations) {
     )
     .join("");
 
-  document.getElementById("recommendations").innerHTML = html;
+  list.innerHTML = html;
 }
 
 function statusChip(status) {
@@ -233,6 +394,23 @@ async function run() {
   renderBottlenecks(report.bottlenecks || []);
   renderRecommendations(report.recommendations || []);
   renderCaseTable(report.cases || []);
+
+  const live = await fetch("/api/live").then((r) => r.json());
+  renderLive(live);
+
+  const geo = await fetch("/api/geo").then((r) => r.json());
+  renderGeoGrid(geo);
+
+  const forecast = await fetch("/api/forecast").then((r) => r.json());
+  renderForecast(forecast);
+
+  const story = await fetch("/api/story").then((r) => r.json());
+  renderStory(story);
+
+  renderRoleSummary("ceo", report.summary || {});
+  await refreshSimulation();
+  await refreshInterventions();
+
   document.body.classList.add("ready");
 
   const summaryBtn = document.querySelector('[data-action="jump-summary"]');
@@ -249,6 +427,58 @@ async function run() {
       if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
+
+  const sliders = ["sim-promo", "sim-closure", "sim-conversion"];
+  sliders.forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.addEventListener("input", () => {
+        refreshSimulation().catch(() => {});
+      });
+    }
+  });
+
+  const askBtn = document.getElementById("copilot-ask");
+  if (askBtn) {
+    askBtn.addEventListener("click", () => {
+      askCopilot().catch(() => {});
+    });
+  }
+
+  const copilotInput = document.getElementById("copilot-q");
+  if (copilotInput) {
+    copilotInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        askCopilot().catch(() => {});
+      }
+    });
+  }
+
+  const intAdd = document.getElementById("int-add");
+  if (intAdd) {
+    intAdd.addEventListener("click", () => {
+      addIntervention().catch(() => {});
+    });
+  }
+
+  const roleButtons = document.querySelectorAll(".role-btn");
+  roleButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      roleButtons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderRoleSummary(btn.dataset.role, report.summary || {});
+    });
+  });
+
+  setInterval(async () => {
+    try {
+      const data = await fetch("/api/live").then((r) => r.json());
+      renderLive(data);
+    } catch (err) {
+      // noop for dashboard continuity
+    }
+  }, 8000);
 }
 
 run().catch((err) => {

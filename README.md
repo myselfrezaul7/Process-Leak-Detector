@@ -33,6 +33,25 @@ node server.js
 - `GET /api/bottlenecks`
 - `GET /api/cases`
 - `GET /api/recommendations`
+- `GET /api/live`
+- `GET /api/simulate?promo=10&closure=5&conversion=12`
+- `GET /api/copilot?q=why%20is%20leakage%20high`
+- `GET /api/geo`
+- `GET /api/forecast`
+- `GET /api/story`
+- `GET /api/interventions`
+- `POST /api/interventions`
+
+## Advanced modules in UI
+
+- Live command center with alert feed and leak ticker
+- AI copilot for executive Q&A
+- What-if simulator with recovery estimate
+- Geo-intelligence heat layer
+- Risk radar timeline (30-day forward view)
+- Intervention tracking loop (owner + expected uplift)
+- Auto story generator for board-ready narrative
+- Role switch modes (`CEO`, `Ops Lead`, `Store Manager`)
 
 ## Rossmann leak logic (store-level)
 

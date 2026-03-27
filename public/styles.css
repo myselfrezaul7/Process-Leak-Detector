@@ -107,22 +107,6 @@ body::after {
   z-index: -1;
 }
 
-.layout {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 1.5rem;
-  display: grid;
-  gap: 1rem;
-}
-
-.hero {
-  background: linear-gradient(130deg, #fffefc, #f5f2ea);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  padding: 1.4rem;
-}
-
 .eyebrow {
   margin: 0;
   color: var(--primary);
@@ -171,6 +155,18 @@ h2 {
   margin: 0 0 0.8rem;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .card {
@@ -414,6 +410,172 @@ h2 {
   box-shadow: var(--glow);
 }
 
+.live-strip {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.live-metric {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.live-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.alert-feed {
+  margin-top: 0.8rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.alert-item {
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.alert-item.high { border-color: rgba(248, 113, 113, 0.45); }
+.alert-item.medium { border-color: rgba(249, 115, 22, 0.45); }
+.alert-item.low { border-color: rgba(94, 234, 212, 0.45); }
+
+.sim-control {
+  display: grid;
+  grid-template-columns: 150px 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.sim-control input[type="range"] {
+  accent-color: #22d3ee;
+}
+
+.sim-output {
+  margin-top: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.copilot-shell {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+}
+
+.copilot-shell input,
+.intervention-form input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+}
+
+.copilot-shell input:focus,
+.intervention-form input:focus {
+  outline: 2px solid rgba(94, 234, 212, 0.5);
+  outline-offset: 1px;
+}
+
+.copilot-answer {
+  margin-top: 0.8rem;
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: rgba(94, 234, 212, 0.08);
+  border: 1px solid rgba(94, 234, 212, 0.3);
+}
+
+.geo-grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(18px, 1fr));
+  gap: 6px;
+}
+
+.geo-cell {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.geo-cell::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.forecast-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 0.3rem;
+}
+
+.forecast-item {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.forecast-band {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(94, 234, 212, 0.2), rgba(34, 211, 238, 0.9));
+}
+
+.intervention-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 0.55rem;
+}
+
+.intervention-list {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.intervention-item {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.role-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.role-btn.active {
+  border-color: rgba(94, 234, 212, 0.6);
+  background: rgba(94, 234, 212, 0.16);
+}
+
+.role-summary {
+  margin-top: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .reco-list {
   margin: 0;
   padding-left: 1.2rem;
@@ -510,6 +672,22 @@ tbody tr:hover {
 
   .mini-graph-value {
     justify-self: end;
+  }
+
+  .sim-control {
+    grid-template-columns: 1fr;
+  }
+
+  .copilot-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .intervention-form {
+    grid-template-columns: 1fr;
+  }
+
+  .geo-grid {
+    grid-template-columns: repeat(8, minmax(18px, 1fr));
   }
 }
 
