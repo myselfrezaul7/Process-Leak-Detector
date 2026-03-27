@@ -264,6 +264,59 @@ async function downloadFile(url, filename) {
   URL.revokeObjectURL(objUrl);
 }
 
+function renderPipelineStatus(status) {
+  const el = document.getElementById("pipeline-status");
+  if (!el) return;
+  if (!status.enabled) {
+    el.textContent = "Pipeline status: disabled (train.csv not detected).";
+    return;
+  }
+  const state = status.isBuilding ? "building..." : "idle";
+  const last = status.lastSuccessAt ? `last success ${status.lastSuccessAt}` : "no successful build yet";
+  const err = status.lastError ? ` | error: ${status.lastError}` : "";
+  el.textContent = `Pipeline status: ${state} | ${last}${err}`;
+}
+
+async function refreshPipelineStatus() {
+  const res = await fetch("/api/pipeline-status");
+  const data = await res.json();
+  renderPipelineStatus(data);
+  return data;
+}
+
+let latestPipelineSuccess = null;
+
+async function loadDashboardData() {
+  const res = await fetch("/api/report");
+  const report = await res.json();
+
+  renderDatasetTag(report);
+  renderTrustPills(report);
+  renderInsights(report);
+  renderKpis(report);
+  renderOverviewGraph(report.summary || {});
+  renderLeakBreakdown(report.summary || {});
+  renderBottlenecks(report.bottlenecks || []);
+  renderRecommendations(report.recommendations || []);
+  renderCaseTable(report.cases || []);
+
+  const live = await fetch("/api/live").then((r) => r.json());
+  renderLive(live);
+
+  const geo = await fetch("/api/geo").then((r) => r.json());
+  renderGeoGrid(geo);
+
+  const forecast = await fetch("/api/forecast").then((r) => r.json());
+  renderForecast(forecast);
+
+  const story = await fetch("/api/story").then((r) => r.json());
+  renderStory(story);
+
+  renderRoleSummary("ceo", report.summary || {});
+  await refreshSimulation();
+  await refreshInterventions();
+}
+
 function fallbackKpis(summary) {
   return [
     ["Total cases", number(summary.totalCases)],
@@ -405,34 +458,7 @@ function renderCaseTable(cases) {
 }
 
 async function run() {
-  const res = await fetch("/api/report");
-  const report = await res.json();
-
-  renderDatasetTag(report);
-  renderTrustPills(report);
-  renderInsights(report);
-  renderKpis(report);
-  renderOverviewGraph(report.summary || {});
-  renderLeakBreakdown(report.summary || {});
-  renderBottlenecks(report.bottlenecks || []);
-  renderRecommendations(report.recommendations || []);
-  renderCaseTable(report.cases || []);
-
-  const live = await fetch("/api/live").then((r) => r.json());
-  renderLive(live);
-
-  const geo = await fetch("/api/geo").then((r) => r.json());
-  renderGeoGrid(geo);
-
-  const forecast = await fetch("/api/forecast").then((r) => r.json());
-  renderForecast(forecast);
-
-  const story = await fetch("/api/story").then((r) => r.json());
-  renderStory(story);
-
-  renderRoleSummary("ceo", report.summary || {});
-  await refreshSimulation();
-  await refreshInterventions();
+  await loadDashboardData();
 
   document.body.classList.add("ready");
 
@@ -490,7 +516,10 @@ async function run() {
     btn.addEventListener("click", () => {
       roleButtons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      renderRoleSummary(btn.dataset.role, report.summary || {});
+      fetch("/api/report")
+        .then((r) => r.json())
+        .then((report) => renderRoleSummary(btn.dataset.role, report.summary || {}))
+        .catch(() => {});
     });
   });
 
@@ -523,6 +552,37 @@ async function run() {
       window.open("/api/export/brief-html", "_blank", "noopener,noreferrer");
     });
   }
+
+  const rebuildBtn = document.getElementById("pipeline-rebuild");
+  if (rebuildBtn) {
+    rebuildBtn.addEventListener("click", async () => {
+      rebuildBtn.disabled = true;
+      try {
+        await fetch("/api/rebuild", { method: "POST" });
+        await refreshPipelineStatus();
+      } catch (err) {
+        // noop
+      } finally {
+        setTimeout(() => {
+          rebuildBtn.disabled = false;
+        }, 1200);
+      }
+    });
+  }
+
+  const firstPipeline = await refreshPipelineStatus();
+  latestPipelineSuccess = firstPipeline.lastSuccessAt || null;
+
+  setInterval(() => {
+    refreshPipelineStatus()
+      .then((status) => {
+        if (status.lastSuccessAt && status.lastSuccessAt !== latestPipelineSuccess) {
+          latestPipelineSuccess = status.lastSuccessAt;
+          loadDashboardData().catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }, 10000);
 }
 
 run().catch((err) => {

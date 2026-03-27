@@ -489,8 +489,17 @@ async function main() {
   console.log(`Stores: ${report.summary.totalStores}, Leak estimate: EUR ${report.summary.estimatedLeakEur}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  buildRossmannReport,
+  findCsvPath,
+  findStoreCsvPath,
+  readStoreMetadata
+};
 

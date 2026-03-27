@@ -3,11 +3,44 @@ const fs = require("fs");
 const path = require("path");
 const { readEvents, aggregate } = require("./src/analytics");
 const { createRecommendations } = require("./src/recommendations");
+const { buildRossmannReport } = require("./src/buildRossmannReport");
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
 const ROSSMANN_REPORT_PATH = path.join(__dirname, "data", "rossmann_report.json");
 const EXPERIMENTS_PATH = path.join(__dirname, "data", "interventions.json");
+
+function resolveTrainCsvPath() {
+  const candidates = [
+    process.env.ROSSMANN_TRAIN_PATH,
+    path.join(__dirname, "data", "train.csv"),
+    "C:\\Users\\mysel\\OneDrive\\Desktop\\Azure\\rossmann-store-sales\\train.csv"
+  ].filter(Boolean);
+  return candidates.find((p) => fs.existsSync(p)) || null;
+}
+
+function resolveStoreCsvPath() {
+  const candidates = [
+    process.env.ROSSMANN_STORE_PATH,
+    path.join(__dirname, "data", "store.csv"),
+    "C:\\Users\\mysel\\OneDrive\\Desktop\\Azure\\rossmann-store-sales\\store.csv"
+  ].filter(Boolean);
+  return candidates.find((p) => fs.existsSync(p)) || null;
+}
+
+const pipelineState = {
+  enabled: false,
+  sourceTrainPath: resolveTrainCsvPath(),
+  sourceStorePath: resolveStoreCsvPath(),
+  isBuilding: false,
+  queued: false,
+  lastBuildAt: null,
+  lastSuccessAt: null,
+  lastDurationMs: 0,
+  lastError: null,
+  lastReason: "startup",
+  watchers: []
+};
 
 function sendJson(res, code, payload) {
   res.writeHead(code, { "Content-Type": "application/json; charset=utf-8" });
@@ -70,6 +103,88 @@ function buildReport() {
   const rossmann = loadRossmannReport();
   if (rossmann) return rossmann;
   return buildEventReport();
+}
+
+function getPipelineStatus() {
+  return {
+    enabled: pipelineState.enabled,
+    sourceTrainPath: pipelineState.sourceTrainPath,
+    sourceStorePath: pipelineState.sourceStorePath,
+    isBuilding: pipelineState.isBuilding,
+    queued: pipelineState.queued,
+    lastBuildAt: pipelineState.lastBuildAt,
+    lastSuccessAt: pipelineState.lastSuccessAt,
+    lastDurationMs: pipelineState.lastDurationMs,
+    lastError: pipelineState.lastError,
+    lastReason: pipelineState.lastReason
+  };
+}
+
+async function triggerRossmannBuild(reason = "manual") {
+  if (!pipelineState.sourceTrainPath) {
+    pipelineState.lastError = "Train CSV not found.";
+    return;
+  }
+
+  if (pipelineState.isBuilding) {
+    pipelineState.queued = true;
+    pipelineState.lastReason = `${reason} (queued)`;
+    return;
+  }
+
+  pipelineState.isBuilding = true;
+  pipelineState.lastError = null;
+  pipelineState.lastReason = reason;
+  pipelineState.lastBuildAt = new Date().toISOString();
+  const started = Date.now();
+
+  try {
+    const report = await buildRossmannReport(pipelineState.sourceTrainPath, pipelineState.sourceStorePath);
+    fs.writeFileSync(ROSSMANN_REPORT_PATH, JSON.stringify(report, null, 2), "utf8");
+    pipelineState.lastSuccessAt = new Date().toISOString();
+    pipelineState.lastError = null;
+  } catch (err) {
+    pipelineState.lastError = err && err.message ? err.message : "Build failed";
+  } finally {
+    pipelineState.isBuilding = false;
+    pipelineState.lastDurationMs = Date.now() - started;
+    if (pipelineState.queued) {
+      pipelineState.queued = false;
+      triggerRossmannBuild("queued-rebuild").catch(() => {});
+    }
+  }
+}
+
+function registerFileWatcher(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) return;
+  const watcher = (curr, prev) => {
+    if (curr.mtimeMs !== prev.mtimeMs) {
+      triggerRossmannBuild(`source-updated:${path.basename(filePath)}`);
+    }
+  };
+  fs.watchFile(filePath, { interval: 2500 }, watcher);
+  pipelineState.watchers.push({ filePath, watcher });
+}
+
+function initAutoPipeline() {
+  if (!pipelineState.sourceTrainPath) {
+    pipelineState.enabled = false;
+    return;
+  }
+  pipelineState.enabled = true;
+  registerFileWatcher(pipelineState.sourceTrainPath);
+  registerFileWatcher(pipelineState.sourceStorePath);
+
+  const reportExists = fs.existsSync(ROSSMANN_REPORT_PATH);
+  const reportMtime = reportExists ? fs.statSync(ROSSMANN_REPORT_PATH).mtimeMs : 0;
+  const trainMtime = fs.existsSync(pipelineState.sourceTrainPath) ? fs.statSync(pipelineState.sourceTrainPath).mtimeMs : 0;
+  const storeMtime = pipelineState.sourceStorePath && fs.existsSync(pipelineState.sourceStorePath)
+    ? fs.statSync(pipelineState.sourceStorePath).mtimeMs
+    : 0;
+
+  if (!reportExists || reportMtime < trainMtime || reportMtime < storeMtime) {
+    triggerRossmannBuild("startup-sync");
+  }
 }
 
 function buildLiveSnapshot(report) {
@@ -287,6 +402,7 @@ function handleGetApi(pathname, urlObj, report, res) {
   if (pathname === "/api/forecast") return sendJson(res, 200, buildForecast(report));
   if (pathname === "/api/story") return sendJson(res, 200, buildStory(report));
   if (pathname === "/api/interventions") return sendJson(res, 200, readInterventions().map(withInterventionMetrics));
+  if (pathname === "/api/pipeline-status") return sendJson(res, 200, getPipelineStatus());
 
   const interventions = readInterventions().map(withInterventionMetrics);
   if (pathname === "/api/export/brief") return sendText(res, 200, buildExecutiveBrief(report, interventions));
@@ -345,6 +461,11 @@ const server = http.createServer((req, res) => {
       handlePostInterventions(req, res, report);
       return;
     }
+    if (pathname === "/api/rebuild" && req.method === "POST") {
+      triggerRossmannBuild("manual-api-trigger");
+      sendJson(res, 202, { accepted: true, status: getPipelineStatus() });
+      return;
+    }
     if (req.method !== "GET") {
       sendJson(res, 405, { error: "Method not allowed" });
       return;
@@ -365,6 +486,8 @@ const server = http.createServer((req, res) => {
   }
   sendFile(res, requested);
 });
+
+initAutoPipeline();
 
 server.listen(PORT, () => {
   console.log(`Process Leak Detector running on http://localhost:${PORT}`);

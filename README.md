@@ -44,6 +44,8 @@ node server.js
 - `GET /api/export/brief`
 - `GET /api/export/actions.csv`
 - `GET /api/export/brief-html`
+- `GET /api/pipeline-status`
+- `POST /api/rebuild`
 
 ## Advanced modules in UI
 
@@ -56,6 +58,14 @@ node server.js
 - Auto story generator for board-ready narrative
 - Role switch modes (`CEO`, `Ops Lead`, `Store Manager`)
 - Export layer (`txt` brief, `csv` action plan, PDF-ready brief page)
+- Auto-ingestion pipeline watcher (rebuilds report when source CSV files change)
+
+## Dynamic data workflow
+
+1. Drop/replace `train.csv` and `store.csv` in your source path.
+2. Watcher auto-detects file changes and rebuilds `data/rossmann_report.json`.
+3. Frontend consumes APIs dynamically (`/api/report`, `/api/live`, `/api/pipeline-status`).
+4. Optional manual trigger: `POST /api/rebuild`.
 
 ## Rossmann leak logic (store-level)
 
