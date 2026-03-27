@@ -206,6 +206,10 @@ h2 {
   margin-top: 1.2rem;
 }
 
+.compact-actions {
+  margin-top: 0.2rem;
+}
+
 .btn {
   border-radius: 999px;
   border: 1px solid transparent;
@@ -540,7 +544,7 @@ h2 {
 
 .intervention-form {
   display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
   gap: 0.55rem;
 }
 

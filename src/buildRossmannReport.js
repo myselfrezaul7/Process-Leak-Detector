@@ -103,8 +103,48 @@ function findCsvPath() {
   return candidates.find((p) => fs.existsSync(p));
 }
 
-async function buildRossmannReport(csvPath) {
+function findStoreCsvPath() {
+  const cliPath = process.argv[3];
+  const candidates = [
+    cliPath,
+    process.env.ROSSMANN_STORE_PATH,
+    path.join(__dirname, "..", "data", "store.csv"),
+    "C:\\Users\\mysel\\OneDrive\\Desktop\\Azure\\rossmann-store-sales\\store.csv"
+  ].filter(Boolean);
+
+  return candidates.find((p) => fs.existsSync(p));
+}
+
+function readStoreMetadata(storeCsvPath) {
+  const meta = new Map();
+  if (!storeCsvPath || !fs.existsSync(storeCsvPath)) {
+    return meta;
+  }
+
+  const raw = fs.readFileSync(storeCsvPath, "utf8");
+  const lines = raw.split(/\r?\n/).filter((line) => line.trim());
+  for (let i = 1; i < lines.length; i += 1) {
+    const cols = parseCsvLine(lines[i]);
+    if (cols.length < 10) continue;
+    const id = String(cols[0]);
+    meta.set(id, {
+      storeType: cols[1] || "unknown",
+      assortment: cols[2] || "unknown",
+      competitionDistance: toNumber(cols[3]),
+      competitionOpenSinceMonth: toNumber(cols[4]),
+      competitionOpenSinceYear: toNumber(cols[5]),
+      promo2: toNumber(cols[6]),
+      promo2SinceWeek: toNumber(cols[7]),
+      promo2SinceYear: toNumber(cols[8]),
+      promoInterval: cols[9] || ""
+    });
+  }
+  return meta;
+}
+
+async function buildRossmannReport(csvPath, storeCsvPath) {
   const stores = new Map();
+  const storeMetadata = readStoreMetadata(storeCsvPath);
 
   const global = {
     rows: 0,
@@ -212,6 +252,8 @@ async function buildRossmannReport(csvPath) {
 
   const weekdayClosureLeak = Array(8).fill(0);
   const cases = [];
+  let metadataCoverage = 0;
+  const storeTypeLeak = new Map();
 
   for (const store of stores.values()) {
     const storeAvgOpenSales = store.totalSales / Math.max(1, store.openDays);
@@ -266,6 +308,11 @@ async function buildRossmannReport(csvPath) {
 
     driverPairs.sort((a, b) => b[1] - a[1]);
     const primaryDriver = driverPairs[0][0];
+    const storeMeta = storeMetadata.get(store.id);
+    if (storeMeta) metadataCoverage += 1;
+    const storeType = storeMeta ? storeMeta.storeType : "unknown";
+    const typeTotal = storeTypeLeak.get(storeType) || 0;
+    storeTypeLeak.set(storeType, typeTotal + totalLeak);
 
     cases.push({
       caseId: `Store-${store.id}`,
@@ -286,7 +333,12 @@ async function buildRossmannReport(csvPath) {
       avgDailySalesEur: money(storeAvgOpenSales),
       valueEur: money(store.totalSales),
       openDays: store.openDays,
-      totalCustomers: store.totalCustomers
+      totalCustomers: store.totalCustomers,
+      storeType,
+      assortment: storeMeta ? storeMeta.assortment : "unknown",
+      competitionDistance: storeMeta ? storeMeta.competitionDistance : 0,
+      promoInterval: storeMeta ? storeMeta.promoInterval : "",
+      promo2: storeMeta ? storeMeta.promo2 : 0
     });
   }
 
@@ -363,6 +415,15 @@ async function buildRossmannReport(csvPath) {
     impact: "Medium"
   });
 
+  const topType = Array.from(storeTypeLeak.entries()).sort((a, b) => b[1] - a[1])[0];
+  if (topType) {
+    recommendations.push({
+      title: `Target store type ${topType[0]} first`,
+      rationale: `Store type ${topType[0]} carries the highest aggregate leakage. Start with type-specific playbooks for faster recovery.`,
+      impact: "High"
+    });
+  }
+
   const avgDailySalesPerStore = cases.length
     ? cases.reduce((acc, c) => acc + c.avgDailySalesEur, 0) / cases.length
     : 0;
@@ -388,7 +449,9 @@ async function buildRossmannReport(csvPath) {
       avgDailySalesPerStore: money(avgDailySalesPerStore),
       globalSalesPerCustomer: money(globalSalesPerCustomer),
       expectedPromoUpliftPct: money(expectedPromoUplift * 100),
-      topLeakArea: leakDrivers[0] ? leakDrivers[0].driver : "n/a"
+      topLeakArea: leakDrivers[0] ? leakDrivers[0].driver : "n/a",
+      metadataCoveragePct: money((metadataCoverage / Math.max(1, cases.length)) * 100),
+      enrichedWithStoreMetadata: metadataCoverage > 0
     },
     summaryCards: [
       { label: "Dataset", value: "Rossmann train.csv" },
@@ -396,7 +459,8 @@ async function buildRossmannReport(csvPath) {
       { label: "Rows", value: String(global.rows) },
       { label: "Leak estimate", value: `${Math.round(totalLeak).toLocaleString("en-US")} EUR` },
       { label: "Risk stores", value: String(riskStores + criticalStores) },
-      { label: "Period", value: `${global.minDate} to ${global.maxDate}` }
+      { label: "Period", value: `${global.minDate} to ${global.maxDate}` },
+      { label: "Metadata coverage", value: `${Math.round((metadataCoverage / Math.max(1, cases.length)) * 100)}%` }
     ],
     bottlenecks,
     recommendations: recommendations.slice(0, 5),
@@ -406,16 +470,22 @@ async function buildRossmannReport(csvPath) {
 
 async function main() {
   const csvPath = findCsvPath();
+  const storeCsvPath = findStoreCsvPath();
   if (!csvPath) {
     console.error("Could not find train.csv. Provide a path: node src/buildRossmannReport.js <path>");
     process.exit(1);
   }
 
-  const report = await buildRossmannReport(csvPath);
+  const report = await buildRossmannReport(csvPath, storeCsvPath);
   const outPath = path.join(__dirname, "..", "data", "rossmann_report.json");
   fs.writeFileSync(outPath, JSON.stringify(report, null, 2), "utf8");
 
   console.log(`Rossmann report written to ${outPath}`);
+  if (storeCsvPath) {
+    console.log(`Store metadata joined from ${storeCsvPath}`);
+  } else {
+    console.log("Store metadata not found; generated report without store.csv enrichment");
+  }
   console.log(`Stores: ${report.summary.totalStores}, Leak estimate: EUR ${report.summary.estimatedLeakEur}`);
 }
 

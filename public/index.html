@@ -71,6 +71,11 @@
       <section class="card" id="command-center">
         <h2>Live Command Center</h2>
         <p class="helper">Real-time pulse of current leakage pressure and active alerts.</p>
+        <div class="hero-actions compact-actions">
+          <button class="btn btn-ghost" type="button" id="export-brief">Export executive brief</button>
+          <button class="btn btn-ghost" type="button" id="export-actions">Export action CSV</button>
+          <button class="btn btn-ghost" type="button" id="export-pdf">Open PDF-ready brief</button>
+        </div>
         <div class="live-strip">
           <div class="live-metric">
             <span class="live-label">Money leaking now</span>
@@ -150,6 +155,10 @@
             <input id="int-owner" type="text" placeholder="Owner (e.g., Ops Lead)" />
             <input id="int-action" type="text" placeholder="Action (e.g., Rework promo flow)" />
             <input id="int-expected" type="number" placeholder="Expected uplift EUR" />
+            <input id="int-baseline" type="number" placeholder="Baseline leak EUR" />
+            <input id="int-after" type="number" placeholder="Actual leak after EUR (optional)" />
+            <input id="int-start" type="date" />
+            <input id="int-end" type="date" />
             <button class="btn btn-ghost" id="int-add" type="button">Add intervention</button>
           </div>
           <div id="intervention-list" class="intervention-list"></div>

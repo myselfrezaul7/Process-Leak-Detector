@@ -209,7 +209,7 @@ function renderInterventions(items) {
     .slice(0, 8)
     .map(
       (i) =>
-        `<div class="intervention-item"><strong>${i.action}</strong> · owner: ${i.owner} · expected: ${eur(i.expectedUpliftEur || 0)} · status: ${i.status}</div>`
+        `<div class="intervention-item"><strong>${i.action}</strong> · owner: ${i.owner} · expected: ${eur(i.expectedUpliftEur || 0)} · actual: ${eur(i.actualUpliftEur || 0)} · progress: ${i.progressPct || 0}% · window: ${i.windowDays || 0}d · status: ${i.status}</div>`
     )
     .join("");
 }
@@ -224,7 +224,11 @@ async function addIntervention() {
   const owner = document.getElementById("int-owner");
   const action = document.getElementById("int-action");
   const expected = document.getElementById("int-expected");
-  if (!owner || !action || !expected) return;
+  const baseline = document.getElementById("int-baseline");
+  const after = document.getElementById("int-after");
+  const start = document.getElementById("int-start");
+  const end = document.getElementById("int-end");
+  if (!owner || !action || !expected || !baseline || !after || !start || !end) return;
   await fetch("/api/interventions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -232,13 +236,32 @@ async function addIntervention() {
       owner: owner.value || "Unassigned",
       action: action.value || "Intervention",
       expectedUpliftEur: Number(expected.value || 0),
+      baselineLeakEur: Number(baseline.value || 0),
+      actualLeakAfterEur: after.value ? Number(after.value) : null,
+      measurementStart: start.value || undefined,
+      measurementEnd: end.value || undefined,
       status: "planned"
     })
   });
   owner.value = "";
   action.value = "";
   expected.value = "";
+  baseline.value = "";
+  after.value = "";
   await refreshInterventions();
+}
+
+async function downloadFile(url, filename) {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  const objUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(objUrl);
 }
 
 function fallbackKpis(summary) {
@@ -479,6 +502,27 @@ async function run() {
       // noop for dashboard continuity
     }
   }, 8000);
+
+  const exportBrief = document.getElementById("export-brief");
+  if (exportBrief) {
+    exportBrief.addEventListener("click", () => {
+      downloadFile("/api/export/brief", "executive-brief.txt").catch(() => {});
+    });
+  }
+
+  const exportActions = document.getElementById("export-actions");
+  if (exportActions) {
+    exportActions.addEventListener("click", () => {
+      downloadFile("/api/export/actions.csv", "action-plan.csv").catch(() => {});
+    });
+  }
+
+  const exportPdf = document.getElementById("export-pdf");
+  if (exportPdf) {
+    exportPdf.addEventListener("click", () => {
+      window.open("/api/export/brief-html", "_blank", "noopener,noreferrer");
+    });
+  }
 }
 
 run().catch((err) => {

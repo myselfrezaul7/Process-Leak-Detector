@@ -12,7 +12,7 @@ If `data/rossmann_report.json` exists, the app will automatically use it.
 ## Run with Rossmann `train.csv`
 
 ```bash
-node src/buildRossmannReport.js "C:\Users\mysel\OneDrive\Desktop\Azure\rossmann-store-sales\train.csv"
+node src/buildRossmannReport.js "C:\Users\mysel\OneDrive\Desktop\Azure\rossmann-store-sales\train.csv" "C:\Users\mysel\OneDrive\Desktop\Azure\rossmann-store-sales\store.csv"
 node server.js
 ```
 
@@ -41,6 +41,9 @@ node server.js
 - `GET /api/story`
 - `GET /api/interventions`
 - `POST /api/interventions`
+- `GET /api/export/brief`
+- `GET /api/export/actions.csv`
+- `GET /api/export/brief-html`
 
 ## Advanced modules in UI
 
@@ -49,9 +52,10 @@ node server.js
 - What-if simulator with recovery estimate
 - Geo-intelligence heat layer
 - Risk radar timeline (30-day forward view)
-- Intervention tracking loop (owner + expected uplift)
+- Intervention tracking loop (baseline/window/actual uplift)
 - Auto story generator for board-ready narrative
 - Role switch modes (`CEO`, `Ops Lead`, `Store Manager`)
+- Export layer (`txt` brief, `csv` action plan, PDF-ready brief page)
 
 ## Rossmann leak logic (store-level)
 
