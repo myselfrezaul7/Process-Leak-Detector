@@ -28,6 +28,8 @@ node server.js
 ## API endpoints
 
 - `GET /api/health`
+- `POST /api/auth/login` (`email`, `password`)
+- `GET /api/auth/me`
 - `GET /api/report`
 - `GET /api/summary`
 - `GET /api/bottlenecks`
@@ -46,6 +48,16 @@ node server.js
 - `GET /api/export/brief-html`
 - `GET /api/pipeline-status`
 - `POST /api/rebuild`
+- `GET /api/anomalies`
+- `POST /api/alerts/refresh`
+- `GET /api/alerts`
+- `GET /api/explain?entityId=Store%201`
+- `POST /api/integrations/task`
+- `GET /api/tasks`
+- `GET /api/digest/latest`
+- `GET /api/tenants`
+
+Most endpoints support multi-tenant routing via query (`?tenant=default`) or header (`x-tenant-id`).
 
 ## Advanced modules in UI
 
@@ -60,12 +72,51 @@ node server.js
 - Export layer (`txt` brief, `csv` action plan, PDF-ready brief page)
 - Auto-ingestion pipeline watcher (rebuilds report when source CSV files change)
 
+## Platform upgrades (implemented)
+
+1. Foundation:
+- Tenant-aware storage under `data/tenants/<tenant>/...`
+- Optional PostgreSQL adapter (fallback to file storage if unavailable)
+- TTL caching and structured request logs
+- CI workflow + smoke tests
+
+2. Security:
+- Token-based auth (`/api/auth/login`)
+- API-level RBAC support for sensitive routes (`AUTH_REQUIRED=true`)
+
+3. Intelligence:
+- Statistical anomaly detection (`/api/anomalies`)
+- Explainability endpoint (`/api/explain`)
+- Alert generation (`/api/alerts`)
+
+4. ROI science:
+- Counterfactual and confidence scoring for interventions
+
+5. Execution + reporting:
+- Integration task handoff endpoint (`/api/integrations/task`)
+- Scheduled digest automation (`/api/digest/latest`)
+- Existing export layer retained
+
+6. Scale primitives:
+- Multi-tenant API context
+- Cache invalidation on writes/rebuild
+- Health and observability improvements
+
 ## Dynamic data workflow
 
 1. Drop/replace `train.csv` and `store.csv` in your source path.
 2. Watcher auto-detects file changes and rebuilds `data/rossmann_report.json`.
 3. Frontend consumes APIs dynamically (`/api/report`, `/api/live`, `/api/pipeline-status`).
 4. Optional manual trigger: `POST /api/rebuild`.
+
+## Auth and RBAC quick start
+
+- Default seeded users (tenant `default`):
+  - `ceo@pld.local` / `ChangeMe123!`
+  - `ops@pld.local` / `ChangeMe123!`
+  - `store@pld.local` / `ChangeMe123!`
+- Enable strict enforcement by setting environment variable: `AUTH_REQUIRED=true`
+- Pass bearer token in header: `Authorization: Bearer <token>`
 
 ## Rossmann leak logic (store-level)
 

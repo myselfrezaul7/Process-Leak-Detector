@@ -4,16 +4,26 @@ const path = require("path");
 const { readEvents, aggregate } = require("./src/analytics");
 const { createRecommendations } = require("./src/recommendations");
 const { buildRossmannReport } = require("./src/buildRossmannReport");
+const { Storage } = require("./src/storage");
+const { resolveTenantId, normalizeTenantId } = require("./src/tenant");
+const { TTLCache } = require("./src/cache");
+const { log } = require("./src/logger");
+const { detectAnomalies, explainEntity, alertsFromAnomalies } = require("./src/intelligence");
+const { buildDigest, sendTaskToProvider } = require("./src/automation");
+const { ensureDefaultUsers, issueToken, verifyToken, authenticate, parseAuthHeader, hasRole } = require("./src/auth");
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.join(__dirname, "public");
-const ROSSMANN_REPORT_PATH = path.join(__dirname, "data", "rossmann_report.json");
-const EXPERIMENTS_PATH = path.join(__dirname, "data", "interventions.json");
+const DATA_DIR = path.join(__dirname, "data");
+const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || "pld-dev-token-change-this";
+const AUTH_REQUIRED = String(process.env.AUTH_REQUIRED || "false").toLowerCase() === "true";
+const REPORT_CACHE_TTL_MS = Number(process.env.REPORT_CACHE_TTL_MS || 8000);
+const DIGEST_INTERVAL_MS = Number(process.env.DIGEST_INTERVAL_MS || 15 * 60 * 1000);
 
 function resolveTrainCsvPath() {
   const candidates = [
     process.env.ROSSMANN_TRAIN_PATH,
-    path.join(__dirname, "data", "train.csv"),
+    path.join(DATA_DIR, "train.csv"),
     "C:\\Users\\mysel\\OneDrive\\Desktop\\Azure\\rossmann-store-sales\\train.csv"
   ].filter(Boolean);
   return candidates.find((p) => fs.existsSync(p)) || null;
@@ -22,24 +32,29 @@ function resolveTrainCsvPath() {
 function resolveStoreCsvPath() {
   const candidates = [
     process.env.ROSSMANN_STORE_PATH,
-    path.join(__dirname, "data", "store.csv"),
+    path.join(DATA_DIR, "store.csv"),
     "C:\\Users\\mysel\\OneDrive\\Desktop\\Azure\\rossmann-store-sales\\store.csv"
   ].filter(Boolean);
   return candidates.find((p) => fs.existsSync(p)) || null;
 }
 
-const pipelineState = {
-  enabled: false,
-  sourceTrainPath: resolveTrainCsvPath(),
-  sourceStorePath: resolveStoreCsvPath(),
-  isBuilding: false,
-  queued: false,
-  lastBuildAt: null,
-  lastSuccessAt: null,
-  lastDurationMs: 0,
-  lastError: null,
-  lastReason: "startup",
-  watchers: []
+const appState = {
+  startedAt: Date.now(),
+  storage: new Storage(DATA_DIR),
+  cache: new TTLCache(REPORT_CACHE_TTL_MS),
+  pipeline: {
+    enabled: false,
+    sourceTrainPath: resolveTrainCsvPath(),
+    sourceStorePath: resolveStoreCsvPath(),
+    isBuilding: false,
+    queued: false,
+    lastBuildAt: null,
+    lastSuccessAt: null,
+    lastDurationMs: 0,
+    lastError: null,
+    lastReason: "startup",
+    watchers: []
+  }
 };
 
 function sendJson(res, code, payload) {
@@ -50,14 +65,6 @@ function sendJson(res, code, payload) {
 function sendText(res, code, payload, contentType = "text/plain; charset=utf-8") {
   res.writeHead(code, { "Content-Type": contentType });
   res.end(payload);
-}
-
-function escapeCsv(value) {
-  const s = String(value == null ? "" : value);
-  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-    return `"${s.replace(/"/g, '""')}"`;
-  }
-  return s;
 }
 
 function sendFile(res, filepath) {
@@ -73,25 +80,63 @@ function sendFile(res, filepath) {
     ".css": "text/css; charset=utf-8",
     ".json": "application/json; charset=utf-8"
   };
-
-  const contentType = contentTypes[ext] || "application/octet-stream";
-  res.writeHead(200, { "Content-Type": contentType });
+  res.writeHead(200, { "Content-Type": contentTypes[ext] || "application/octet-stream" });
   fs.createReadStream(filepath).pipe(res);
 }
 
-function loadRossmannReport() {
-  if (!fs.existsSync(ROSSMANN_REPORT_PATH)) return null;
-  try {
-    return JSON.parse(fs.readFileSync(ROSSMANN_REPORT_PATH, "utf8"));
-  } catch (err) {
-    console.warn("Failed to parse Rossmann report:", err.message);
-    return null;
+function escapeCsv(value) {
+  const s = String(value == null ? "" : value);
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+    return `"${s.replace(/"/g, '""')}"`;
   }
+  return s;
 }
 
-function buildEventReport() {
-  const events = readEvents();
-  const report = aggregate(events);
+function readBodyJson(req) {
+  return new Promise((resolve, reject) => {
+    let raw = "";
+    req.on("data", (chunk) => {
+      raw += chunk;
+    });
+    req.on("end", () => {
+      try {
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch (err) {
+        reject(new Error("Invalid JSON payload"));
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
+function userFromRequest(req) {
+  const token = parseAuthHeader(req.headers);
+  const claims = token ? verifyToken(token, TOKEN_SECRET) : null;
+  return claims || null;
+}
+
+function checkRole(user, roles) {
+  if (!AUTH_REQUIRED) return true;
+  if (!user) return false;
+  return hasRole(user, roles);
+}
+
+function cacheKey(prefix, tenantId) {
+  return `${prefix}:${normalizeTenantId(tenantId)}`;
+}
+
+function invalidateTenantCache(tenantId) {
+  const keys = ["report", "summary", "live", "bottlenecks", "cases", "recommendations", "anomalies", "alerts"];
+  keys.forEach((k) => appState.cache.del(cacheKey(k, tenantId)));
+}
+
+function buildEventReportFromLegacyEvents() {
+  const events = appState.storage.readLegacyEvents();
+  const report = aggregate(
+    events
+      .map((e) => ({ ...e, ts: new Date(e.timestamp).getTime() }))
+      .sort((a, b) => a.ts - b.ts)
+  );
   return {
     ...report,
     dataset: "process-events",
@@ -99,161 +144,66 @@ function buildEventReport() {
   };
 }
 
-function buildReport() {
-  const rossmann = loadRossmannReport();
-  if (rossmann) return rossmann;
-  return buildEventReport();
-}
+async function getReport(tenantId) {
+  const key = cacheKey("report", tenantId);
+  const hit = appState.cache.get(key);
+  if (hit) return hit;
 
-function getPipelineStatus() {
-  return {
-    enabled: pipelineState.enabled,
-    sourceTrainPath: pipelineState.sourceTrainPath,
-    sourceStorePath: pipelineState.sourceStorePath,
-    isBuilding: pipelineState.isBuilding,
-    queued: pipelineState.queued,
-    lastBuildAt: pipelineState.lastBuildAt,
-    lastSuccessAt: pipelineState.lastSuccessAt,
-    lastDurationMs: pipelineState.lastDurationMs,
-    lastError: pipelineState.lastError,
-    lastReason: pipelineState.lastReason
-  };
-}
-
-async function triggerRossmannBuild(reason = "manual") {
-  if (!pipelineState.sourceTrainPath) {
-    pipelineState.lastError = "Train CSV not found.";
-    return;
+  let report = await appState.storage.readReport(tenantId);
+  if (!report) {
+    report = buildEventReportFromLegacyEvents();
   }
-
-  if (pipelineState.isBuilding) {
-    pipelineState.queued = true;
-    pipelineState.lastReason = `${reason} (queued)`;
-    return;
-  }
-
-  pipelineState.isBuilding = true;
-  pipelineState.lastError = null;
-  pipelineState.lastReason = reason;
-  pipelineState.lastBuildAt = new Date().toISOString();
-  const started = Date.now();
-
-  try {
-    const report = await buildRossmannReport(pipelineState.sourceTrainPath, pipelineState.sourceStorePath);
-    fs.writeFileSync(ROSSMANN_REPORT_PATH, JSON.stringify(report, null, 2), "utf8");
-    pipelineState.lastSuccessAt = new Date().toISOString();
-    pipelineState.lastError = null;
-  } catch (err) {
-    pipelineState.lastError = err && err.message ? err.message : "Build failed";
-  } finally {
-    pipelineState.isBuilding = false;
-    pipelineState.lastDurationMs = Date.now() - started;
-    if (pipelineState.queued) {
-      pipelineState.queued = false;
-      triggerRossmannBuild("queued-rebuild").catch(() => {});
-    }
-  }
+  appState.cache.set(key, report);
+  return report;
 }
 
-function registerFileWatcher(filePath) {
-  if (!filePath || !fs.existsSync(filePath)) return;
-  const watcher = (curr, prev) => {
-    if (curr.mtimeMs !== prev.mtimeMs) {
-      triggerRossmannBuild(`source-updated:${path.basename(filePath)}`);
-    }
-  };
-  fs.watchFile(filePath, { interval: 2500 }, watcher);
-  pipelineState.watchers.push({ filePath, watcher });
-}
-
-function initAutoPipeline() {
-  if (!pipelineState.sourceTrainPath) {
-    pipelineState.enabled = false;
-    return;
-  }
-  pipelineState.enabled = true;
-  registerFileWatcher(pipelineState.sourceTrainPath);
-  registerFileWatcher(pipelineState.sourceStorePath);
-
-  const reportExists = fs.existsSync(ROSSMANN_REPORT_PATH);
-  const reportMtime = reportExists ? fs.statSync(ROSSMANN_REPORT_PATH).mtimeMs : 0;
-  const trainMtime = fs.existsSync(pipelineState.sourceTrainPath) ? fs.statSync(pipelineState.sourceTrainPath).mtimeMs : 0;
-  const storeMtime = pipelineState.sourceStorePath && fs.existsSync(pipelineState.sourceStorePath)
-    ? fs.statSync(pipelineState.sourceStorePath).mtimeMs
-    : 0;
-
-  if (!reportExists || reportMtime < trainMtime || reportMtime < storeMtime) {
-    triggerRossmannBuild("startup-sync");
-  }
-}
-
-function buildLiveSnapshot(report) {
-  const summary = report.summary || {};
-  const now = new Date();
-  const leakRatePerMin = (summary.estimatedLeakEur || 0) / Math.max(1, 30 * 24 * 60);
-  const activeAlerts = Math.max(1, Math.round(((summary.riskStores || 0) + (summary.criticalStores || 0)) / 12));
-  const alerts = (report.bottlenecks || []).slice(0, 3).map((b, idx) => ({
-    id: `alert-${idx + 1}`,
-    title: b.driver || b.transition || "Leak pressure rising",
-    severity: idx === 0 ? "high" : idx === 1 ? "medium" : "low"
-  }));
-
-  return {
-    timestamp: now.toISOString(),
-    leakRatePerMin,
-    activeAlerts,
-    moneyLeakingNow: leakRatePerMin * (now.getSeconds() / 60),
-    alerts
-  };
-}
-
-function readInterventions() {
-  if (!fs.existsSync(EXPERIMENTS_PATH)) {
-    return [];
-  }
-  try {
-    const data = JSON.parse(fs.readFileSync(EXPERIMENTS_PATH, "utf8"));
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.warn("Failed to read interventions:", err.message);
-    return [];
-  }
-}
-
-function writeInterventions(items) {
-  fs.writeFileSync(EXPERIMENTS_PATH, JSON.stringify(items, null, 2), "utf8");
-}
-
-function withInterventionMetrics(item) {
-  const baseline = Number(item.baselineLeakEur || 0);
-  const after = Number(item.actualLeakAfterEur || 0);
+function withInterventionMetrics(item, report) {
+  const baseline = Number(item.baselineLeakEur || (report.summary && report.summary.estimatedLeakEur) || 0);
+  const after = item.actualLeakAfterEur != null ? Number(item.actualLeakAfterEur) : null;
   const expected = Number(item.expectedUpliftEur || 0);
-  const computedActual = item.actualLeakAfterEur != null ? Math.max(0, baseline - after) : Number(item.actualUpliftEur || 0);
+  const computedActual = after != null ? Math.max(0, baseline - after) : Number(item.actualUpliftEur || 0);
+  const windowDays =
+    item.measurementStart && item.measurementEnd
+      ? Math.max(1, Math.round((new Date(item.measurementEnd) - new Date(item.measurementStart)) / (1000 * 60 * 60 * 24)))
+      : 14;
+  const counterfactualLeakEur = Math.round(baseline * (1 + Math.min(0.15, (windowDays / 30) * 0.03)));
+  const effectVsCounterfactual = Math.max(0, counterfactualLeakEur - (after != null ? after : baseline - computedActual));
+  const confidencePct = Math.max(
+    45,
+    Math.min(
+      98,
+      Math.round(60 + Math.min(25, (windowDays / 14) * 8) + Math.min(13, (effectVsCounterfactual / Math.max(1, baseline)) * 100))
+    )
+  );
   const progressPct = expected > 0 ? Math.round((computedActual / expected) * 100) : 0;
-  const windowDays = item.measurementStart && item.measurementEnd
-    ? Math.max(1, Math.round((new Date(item.measurementEnd) - new Date(item.measurementStart)) / (1000 * 60 * 60 * 24)))
-    : 0;
   return {
     ...item,
+    baselineLeakEur: Math.round(baseline),
+    counterfactualLeakEur,
     actualUpliftEur: Math.round(computedActual),
+    effectVsCounterfactualEur: Math.round(effectVsCounterfactual),
+    confidencePct,
     progressPct,
     windowDays
   };
 }
 
-function buildGeoData(report) {
-  const cases = (report.cases || []).slice(0, 160);
-  return cases.map((c, idx) => {
-    const lat = 47.35 + ((idx * 17) % 100) * 0.06;
-    const lon = 6.9 + ((idx * 29) % 100) * 0.08;
-    return {
-      id: c.entityId || c.caseId || `entity-${idx + 1}`,
-      leakEur: c.leakEur || 0,
-      risk: c.status || "open",
-      lat: Number(lat.toFixed(3)),
-      lon: Number(lon.toFixed(3))
-    };
-  });
+function buildLiveSnapshot(report) {
+  const summary = report.summary || {};
+  const anomalies = detectAnomalies(report);
+  const leakRatePerMin = (summary.estimatedLeakEur || 0) / Math.max(1, 30 * 24 * 60);
+  const alerts = anomalies.slice(0, 3).map((a, i) => ({
+    id: `live-${i + 1}`,
+    title: `${a.id} abnormal leak spike`,
+    severity: a.severity
+  }));
+  return {
+    timestamp: new Date().toISOString(),
+    leakRatePerMin,
+    activeAlerts: alerts.length,
+    moneyLeakingNow: leakRatePerMin * ((new Date().getSeconds() + 1) / 60),
+    alerts
+  };
 }
 
 function buildForecast(report) {
@@ -275,18 +225,19 @@ function buildForecast(report) {
   return points;
 }
 
-function buildStory(report) {
+function buildStory(report, interventions) {
   const summary = report.summary || {};
   const top = (report.bottlenecks || [])[0];
-  const total = summary.estimatedLeakEur || 0;
   const topLeak = summary.topLeakArea || (top && (top.driver || top.transition)) || "unknown";
+  const expected = interventions.reduce((acc, i) => acc + Number(i.expectedUpliftEur || 0), 0);
+  const actual = interventions.reduce((acc, i) => acc + Number(i.actualUpliftEur || 0), 0);
   return {
     title: "Executive transformation story",
     bullets: [
-      `Current leakage exposure is ${Math.round(total).toLocaleString("en-US")} EUR.`,
+      `Current leakage exposure is ${Math.round(summary.estimatedLeakEur || 0).toLocaleString("en-US")} EUR.`,
       `Primary pressure point: ${topLeak}.`,
-      `Immediate focus: ${((summary.riskStores || 0) + (summary.criticalStores || 0)).toLocaleString("en-US")} entities at risk.`,
-      "Recommended path: fix top driver, enforce owner accountability, and track intervention ROI weekly."
+      `Intervention progress: expected ${Math.round(expected).toLocaleString("en-US")} EUR vs actual ${Math.round(actual).toLocaleString("en-US")} EUR.`,
+      "Recommended path: fix top anomaly clusters, assign owners, and close weekly ROI reviews."
     ]
   };
 }
@@ -297,11 +248,9 @@ function runSimulation(report, query) {
   const promo = Math.max(-30, Math.min(40, Number(query.get("promo") || 0)));
   const closure = Math.max(-40, Math.min(40, Number(query.get("closure") || 0)));
   const conversion = Math.max(-30, Math.min(40, Number(query.get("conversion") || 0)));
-
   const impactFactor = promo * 0.002 + closure * 0.003 + conversion * 0.004;
   const projectedLeak = Math.max(0, baseLeak * (1 - impactFactor));
   const recovered = Math.max(0, baseLeak - projectedLeak);
-
   return {
     inputs: { promo, closure, conversion },
     baselineLeakEur: Math.round(baseLeak),
@@ -314,56 +263,30 @@ function runSimulation(report, query) {
 function answerCopilot(report, question) {
   const q = String(question || "").toLowerCase();
   const summary = report.summary || {};
-  const top = (report.bottlenecks || [])[0];
+  const anomalies = detectAnomalies(report);
   const topRisk = (report.cases || [])[0];
-  const total = Math.round(summary.estimatedLeakEur || 0).toLocaleString("en-US");
-
-  if (!q.trim()) return "Ask about leak drivers, forecast, or which action to prioritize first.";
-  if (q.includes("why") || q.includes("driver")) {
-    return `The main driver is ${summary.topLeakArea || (top && (top.driver || top.transition)) || "unknown"}, and it explains the largest share of the ${total} EUR estimated leakage.`;
+  if (!q.trim()) return "Ask about anomalies, drivers, interventions, or forecast.";
+  if (q.includes("anomal")) {
+    return anomalies.length
+      ? `Top anomaly is ${anomalies[0].id} with z-score ${anomalies[0].zScore}.`
+      : "No active anomalies above threshold right now.";
+  }
+  if (q.includes("driver") || q.includes("why")) {
+    return `Primary leakage driver is ${summary.topLeakArea || "unknown"}, causing the largest estimated impact.`;
   }
   if (q.includes("store") || q.includes("entity")) {
-    return `Highest-risk entity now: ${topRisk ? (topRisk.entityId || topRisk.caseId) : "not available"}, with estimated leak ${topRisk ? Math.round(topRisk.leakEur).toLocaleString("en-US") : "n/a"} EUR.`;
+    return `Highest-risk entity currently: ${topRisk ? topRisk.entityId || topRisk.caseId : "n/a"}.`;
   }
-  if (q.includes("forecast") || q.includes("next")) {
-    return "The 30-day forecast trends upward unless we launch targeted interventions on top bottlenecks this week.";
+  if (q.includes("forecast")) {
+    return "30-day risk radar indicates upward leakage unless top interventions are executed now.";
   }
-  if (q.includes("action") || q.includes("do")) {
-    return "Start with one intervention on the top leakage driver, assign one owner, and track expected vs actual uplift after 14 days.";
-  }
-  return "Leakage is concentrated in a few drivers; focused interventions with owner accountability will recover value faster than broad campaigns.";
-}
-
-function buildExecutiveBrief(report, interventions) {
-  const summary = report.summary || {};
-  const story = buildStory(report);
-  const totalExpected = interventions.reduce((acc, i) => acc + Number(i.expectedUpliftEur || 0), 0);
-  const totalActual = interventions.reduce((acc, i) => acc + Number(i.actualUpliftEur || 0), 0);
-  return [
-    "Process Leak Detector - Executive Brief",
-    `Generated: ${new Date().toISOString()}`,
-    "",
-    `Dataset: ${report.dataset || "unknown"}`,
-    `Leakage estimate: ${Math.round(summary.estimatedLeakEur || 0).toLocaleString("en-US")} EUR`,
-    `Top driver: ${summary.topLeakArea || "n/a"}`,
-    `Risk entities: ${((summary.riskStores || 0) + (summary.criticalStores || 0)).toLocaleString("en-US")}`,
-    "",
-    "Story:",
-    ...story.bullets.map((b) => `- ${b}`),
-    "",
-    "Intervention tracking:",
-    `- Active interventions: ${interventions.length}`,
-    `- Expected uplift total: ${Math.round(totalExpected).toLocaleString("en-US")} EUR`,
-    `- Actual uplift total: ${Math.round(totalActual).toLocaleString("en-US")} EUR`
-  ].join("\n");
+  return "Use role-based view, anomaly feed, and intervention confidence to prioritize actions each week.";
 }
 
 function buildActionsCsv(report, interventions) {
-  const rows = [
-    ["type", "title_or_action", "owner", "impact_or_status", "expected_uplift_eur", "actual_uplift_eur"]
-  ];
+  const rows = [["type", "title_or_action", "owner", "status_or_impact", "expected_uplift_eur", "actual_uplift_eur", "confidence_pct"]];
   (report.recommendations || []).forEach((r) => {
-    rows.push(["recommendation", r.title || "", "", r.impact || "", "", ""]);
+    rows.push(["recommendation", r.title || "", "", r.impact || "", "", "", ""]);
   });
   interventions.forEach((i) => {
     rows.push([
@@ -372,24 +295,179 @@ function buildActionsCsv(report, interventions) {
       i.owner || "",
       i.status || "",
       Number(i.expectedUpliftEur || 0),
-      Number(i.actualUpliftEur || 0)
+      Number(i.actualUpliftEur || 0),
+      Number(i.confidencePct || 0)
     ]);
   });
   return rows.map((r) => r.map(escapeCsv).join(",")).join("\n");
 }
 
-function buildBriefHtml(report, interventions) {
-  const brief = buildExecutiveBrief(report, interventions).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+function buildBriefText(report, interventions, tenantId) {
+  const summary = report.summary || {};
+  const story = buildStory(report, interventions);
+  return [
+    "Process Leak Detector - Executive Brief",
+    `Tenant: ${tenantId}`,
+    `Generated: ${new Date().toISOString()}`,
+    "",
+    `Dataset: ${report.dataset || "unknown"}`,
+    `Leakage estimate: ${Math.round(summary.estimatedLeakEur || 0).toLocaleString("en-US")} EUR`,
+    `Top driver: ${summary.topLeakArea || "n/a"}`,
+    "",
+    ...story.bullets.map((b) => `- ${b}`)
+  ].join("\n");
+}
+
+function buildBriefHtml(text) {
+  const safe = text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
   return `<!doctype html><html><head><meta charset="utf-8"><title>Executive Brief</title><style>
   body{font-family:Arial,sans-serif;padding:28px;line-height:1.5;color:#111}
   h1{font-size:22px}
   pre{white-space:pre-wrap;font-family:inherit}
   .hint{margin-top:20px;font-size:12px;color:#555}
-  </style></head><body><h1>Executive Brief</h1><pre>${brief}</pre><p class="hint">Use browser print to export as PDF.</p></body></html>`;
+  </style></head><body><h1>Executive Brief</h1><pre>${safe}</pre><p class="hint">Use browser print to export as PDF.</p></body></html>`;
 }
 
-function handleGetApi(pathname, urlObj, report, res) {
-  if (pathname === "/api/health") return sendJson(res, 200, { ok: true, service: "process-leak-detector", dataset: report.dataset || "unknown" });
+function getPipelineStatus(tenantId) {
+  return {
+    tenantId,
+    enabled: appState.pipeline.enabled,
+    sourceTrainPath: appState.pipeline.sourceTrainPath,
+    sourceStorePath: appState.pipeline.sourceStorePath,
+    isBuilding: appState.pipeline.isBuilding,
+    queued: appState.pipeline.queued,
+    lastBuildAt: appState.pipeline.lastBuildAt,
+    lastSuccessAt: appState.pipeline.lastSuccessAt,
+    lastDurationMs: appState.pipeline.lastDurationMs,
+    lastError: appState.pipeline.lastError,
+    lastReason: appState.pipeline.lastReason
+  };
+}
+
+async function refreshAlertsForTenant(tenantId, report) {
+  const anomalies = detectAnomalies(report);
+  const derived = alertsFromAnomalies(anomalies);
+  await appState.storage.writeAlerts(tenantId, derived);
+  appState.cache.del(cacheKey("alerts", tenantId));
+  appState.cache.del(cacheKey("anomalies", tenantId));
+}
+
+async function triggerRossmannBuild(tenantId, reason = "manual") {
+  const t = normalizeTenantId(tenantId);
+  if (!appState.pipeline.sourceTrainPath) {
+    appState.pipeline.lastError = "Train CSV not found.";
+    return;
+  }
+  if (appState.pipeline.isBuilding) {
+    appState.pipeline.queued = true;
+    appState.pipeline.lastReason = `${reason} (queued)`;
+    return;
+  }
+
+  appState.pipeline.isBuilding = true;
+  appState.pipeline.lastError = null;
+  appState.pipeline.lastReason = reason;
+  appState.pipeline.lastBuildAt = new Date().toISOString();
+  const started = Date.now();
+
+  try {
+    const report = await buildRossmannReport(appState.pipeline.sourceTrainPath, appState.pipeline.sourceStorePath);
+    await appState.storage.writeReport(t, report);
+    await refreshAlertsForTenant(t, report);
+    invalidateTenantCache(t);
+    appState.pipeline.lastSuccessAt = new Date().toISOString();
+  } catch (err) {
+    appState.pipeline.lastError = err && err.message ? err.message : "Build failed";
+  } finally {
+    appState.pipeline.lastDurationMs = Date.now() - started;
+    appState.pipeline.isBuilding = false;
+    if (appState.pipeline.queued) {
+      appState.pipeline.queued = false;
+      triggerRossmannBuild(t, "queued-rebuild").catch(() => {});
+    }
+  }
+}
+
+function registerFileWatcher(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) return;
+  const watcher = (curr, prev) => {
+    if (curr.mtimeMs !== prev.mtimeMs) {
+      triggerRossmannBuild("default", `source-updated:${path.basename(filePath)}`).catch(() => {});
+    }
+  };
+  fs.watchFile(filePath, { interval: 2500 }, watcher);
+  appState.pipeline.watchers.push({ filePath, watcher });
+}
+
+function initAutoPipeline() {
+  if (!appState.pipeline.sourceTrainPath) {
+    appState.pipeline.enabled = false;
+    return;
+  }
+  appState.pipeline.enabled = true;
+  registerFileWatcher(appState.pipeline.sourceTrainPath);
+  registerFileWatcher(appState.pipeline.sourceStorePath);
+  triggerRossmannBuild("default", "startup-sync").catch(() => {});
+}
+
+async function runDigestAutomation() {
+  try {
+    const tenantId = "default";
+    const report = await getReport(tenantId);
+    const interventionsRaw = await appState.storage.readInterventions(tenantId);
+    const interventions = interventionsRaw.map((i) => withInterventionMetrics(i, report));
+    const digest = buildDigest(report, interventions, tenantId);
+    await appState.storage.writeDigest(tenantId, digest);
+  } catch (err) {
+    log("warn", "Digest automation failed", { error: err.message });
+  }
+}
+
+function startDigestScheduler() {
+  runDigestAutomation().catch(() => {});
+  setInterval(() => {
+    runDigestAutomation().catch(() => {});
+  }, DIGEST_INTERVAL_MS);
+}
+
+async function routeApi(req, res, urlObj, tenantId, user) {
+  const pathname = urlObj.pathname;
+  const report = await getReport(tenantId);
+
+  if (pathname === "/api/health") {
+    sendJson(res, 200, {
+      ok: true,
+      service: "process-leak-detector",
+      dataset: report.dataset || "unknown",
+      uptimeSec: Math.round((Date.now() - appState.startedAt) / 1000),
+      memoryMb: Math.round(process.memoryUsage().rss / (1024 * 1024)),
+      authRequired: AUTH_REQUIRED,
+      tenant: tenantId
+    });
+    return;
+  }
+
+  if (pathname === "/api/auth/login" && req.method === "POST") {
+    const body = await readBodyJson(req);
+    const principal = await authenticate(appState.storage, tenantId, body.email, body.password);
+    if (!principal) {
+      sendJson(res, 401, { error: "Invalid credentials" });
+      return;
+    }
+    const token = issueToken(principal, TOKEN_SECRET);
+    sendJson(res, 200, { token, user: { email: principal.email, role: principal.role, name: principal.name } });
+    return;
+  }
+
+  if (pathname === "/api/auth/me") {
+    if (!user) {
+      sendJson(res, 200, { user: null, authRequired: AUTH_REQUIRED });
+      return;
+    }
+    sendJson(res, 200, { user });
+    return;
+  }
+
   if (pathname === "/api/report") return sendJson(res, 200, report);
   if (pathname === "/api/summary") return sendJson(res, 200, report.summary);
   if (pathname === "/api/bottlenecks") return sendJson(res, 200, report.bottlenecks);
@@ -398,97 +476,231 @@ function handleGetApi(pathname, urlObj, report, res) {
   if (pathname === "/api/live") return sendJson(res, 200, buildLiveSnapshot(report));
   if (pathname === "/api/simulate") return sendJson(res, 200, runSimulation(report, urlObj.searchParams));
   if (pathname === "/api/copilot") return sendJson(res, 200, { answer: answerCopilot(report, urlObj.searchParams.get("q") || "") });
-  if (pathname === "/api/geo") return sendJson(res, 200, buildGeoData(report));
+
+  if (pathname === "/api/anomalies") {
+    const key = cacheKey("anomalies", tenantId);
+    const cached = appState.cache.get(key);
+    if (cached) return sendJson(res, 200, cached);
+    const anomalies = detectAnomalies(report);
+    appState.cache.set(key, anomalies, 7000);
+    return sendJson(res, 200, anomalies);
+  }
+
+  if (pathname === "/api/explain") {
+    const entityId = urlObj.searchParams.get("entityId") || "";
+    const explanation = explainEntity(report, entityId);
+    if (!explanation) {
+      sendJson(res, 404, { error: "Entity not found" });
+      return;
+    }
+    sendJson(res, 200, explanation);
+    return;
+  }
+
+  if (pathname === "/api/alerts") {
+    const key = cacheKey("alerts", tenantId);
+    const cached = appState.cache.get(key);
+    if (cached) return sendJson(res, 200, cached);
+    const alerts = await appState.storage.readAlerts(tenantId);
+    appState.cache.set(key, alerts, 8000);
+    return sendJson(res, 200, alerts);
+  }
+
+  if (pathname === "/api/alerts/refresh" && req.method === "POST") {
+    if (!checkRole(user, ["ceo", "ops"])) {
+      sendJson(res, 403, { error: "Forbidden" });
+      return;
+    }
+    await refreshAlertsForTenant(tenantId, report);
+    const alerts = await appState.storage.readAlerts(tenantId);
+    sendJson(res, 200, alerts);
+    return;
+  }
+
+  if (pathname === "/api/geo") {
+    const cases = (report.cases || []).slice(0, 160);
+    const data = cases.map((c, idx) => ({
+      id: c.entityId || c.caseId || `entity-${idx + 1}`,
+      leakEur: c.leakEur || 0,
+      risk: c.status || "open",
+      lat: Number((47.35 + ((idx * 17) % 100) * 0.06).toFixed(3)),
+      lon: Number((6.9 + ((idx * 29) % 100) * 0.08).toFixed(3))
+    }));
+    sendJson(res, 200, data);
+    return;
+  }
+
   if (pathname === "/api/forecast") return sendJson(res, 200, buildForecast(report));
-  if (pathname === "/api/story") return sendJson(res, 200, buildStory(report));
-  if (pathname === "/api/interventions") return sendJson(res, 200, readInterventions().map(withInterventionMetrics));
-  if (pathname === "/api/pipeline-status") return sendJson(res, 200, getPipelineStatus());
 
-  const interventions = readInterventions().map(withInterventionMetrics);
-  if (pathname === "/api/export/brief") return sendText(res, 200, buildExecutiveBrief(report, interventions));
-  if (pathname === "/api/export/actions.csv") return sendText(res, 200, buildActionsCsv(report, interventions), "text/csv; charset=utf-8");
-  if (pathname === "/api/export/brief-html") return sendText(res, 200, buildBriefHtml(report, interventions), "text/html; charset=utf-8");
-  return sendJson(res, 404, { error: "Unknown API route" });
-}
-
-function handlePostInterventions(req, res, report) {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk;
-  });
-  req.on("end", () => {
-    try {
-      const payload = JSON.parse(body || "{}");
-      const items = readInterventions();
+  if (pathname === "/api/interventions") {
+    if (req.method === "POST") {
+      if (!checkRole(user, ["ceo", "ops"])) {
+        sendJson(res, 403, { error: "Forbidden" });
+        return;
+      }
+      const body = await readBodyJson(req);
+      const existing = await appState.storage.readInterventions(tenantId);
       const now = new Date().toISOString();
-      const baselineLeakEur = Number(payload.baselineLeakEur || (report.summary && report.summary.estimatedLeakEur) || 0);
-      const measurementStart = payload.measurementStart || now.slice(0, 10);
-      const measurementEnd = payload.measurementEnd || new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString().slice(0, 10);
       const item = {
-        id: payload.id || `exp-${Date.now()}`,
-        owner: payload.owner || "Unassigned",
-        action: payload.action || "Intervention",
-        expectedUpliftEur: Number(payload.expectedUpliftEur || 0),
-        actualUpliftEur: Number(payload.actualUpliftEur || 0),
-        baselineLeakEur,
-        actualLeakAfterEur: payload.actualLeakAfterEur != null ? Number(payload.actualLeakAfterEur) : null,
-        measurementStart,
-        measurementEnd,
-        status: payload.status || "planned",
+        id: body.id || `exp-${Date.now()}`,
+        owner: body.owner || "Unassigned",
+        action: body.action || "Intervention",
+        expectedUpliftEur: Number(body.expectedUpliftEur || 0),
+        actualUpliftEur: Number(body.actualUpliftEur || 0),
+        baselineLeakEur: Number(body.baselineLeakEur || (report.summary && report.summary.estimatedLeakEur) || 0),
+        actualLeakAfterEur: body.actualLeakAfterEur != null ? Number(body.actualLeakAfterEur) : null,
+        measurementStart: body.measurementStart || now.slice(0, 10),
+        measurementEnd: body.measurementEnd || new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+        status: body.status || "planned",
         createdAt: now
       };
-      const idx = items.findIndex((x) => x.id === item.id);
-      if (idx >= 0) {
-        items[idx] = { ...items[idx], ...item, createdAt: items[idx].createdAt || now };
-      } else {
-        items.unshift(item);
-      }
-      writeInterventions(items.slice(0, 120));
-      sendJson(res, 201, withInterventionMetrics(item));
-    } catch (err) {
-      sendJson(res, 400, { error: "Invalid JSON payload" });
+      const idx = existing.findIndex((x) => x.id === item.id);
+      if (idx >= 0) existing[idx] = { ...existing[idx], ...item, createdAt: existing[idx].createdAt || now };
+      else existing.unshift(item);
+      await appState.storage.writeInterventions(tenantId, existing.slice(0, 150));
+      sendJson(res, 201, withInterventionMetrics(item, report));
+      return;
     }
+    const items = await appState.storage.readInterventions(tenantId);
+    sendJson(res, 200, items.map((i) => withInterventionMetrics(i, report)));
+    return;
+  }
+
+  if (pathname === "/api/story") {
+    const interventions = (await appState.storage.readInterventions(tenantId)).map((i) => withInterventionMetrics(i, report));
+    sendJson(res, 200, buildStory(report, interventions));
+    return;
+  }
+
+  if (pathname === "/api/export/brief") {
+    const interventions = (await appState.storage.readInterventions(tenantId)).map((i) => withInterventionMetrics(i, report));
+    sendText(res, 200, buildBriefText(report, interventions, tenantId));
+    return;
+  }
+
+  if (pathname === "/api/export/actions.csv") {
+    const interventions = (await appState.storage.readInterventions(tenantId)).map((i) => withInterventionMetrics(i, report));
+    sendText(res, 200, buildActionsCsv(report, interventions), "text/csv; charset=utf-8");
+    return;
+  }
+
+  if (pathname === "/api/export/brief-html") {
+    const interventions = (await appState.storage.readInterventions(tenantId)).map((i) => withInterventionMetrics(i, report));
+    const brief = buildBriefText(report, interventions, tenantId);
+    sendText(res, 200, buildBriefHtml(brief), "text/html; charset=utf-8");
+    return;
+  }
+
+  if (pathname === "/api/pipeline-status") {
+    sendJson(res, 200, getPipelineStatus(tenantId));
+    return;
+  }
+
+  if (pathname === "/api/rebuild" && req.method === "POST") {
+    if (!checkRole(user, ["ceo", "ops"])) {
+      sendJson(res, 403, { error: "Forbidden" });
+      return;
+    }
+    triggerRossmannBuild(tenantId, "manual-api-trigger").catch(() => {});
+    sendJson(res, 202, { accepted: true, status: getPipelineStatus(tenantId) });
+    return;
+  }
+
+  if (pathname === "/api/integrations/task" && req.method === "POST") {
+    if (!checkRole(user, ["ceo", "ops"])) {
+      sendJson(res, 403, { error: "Forbidden" });
+      return;
+    }
+    const body = await readBodyJson(req);
+    const task = {
+      id: `task-${Date.now()}`,
+      provider: body.provider || "jira",
+      title: body.title || "Leak intervention",
+      description: body.description || "",
+      owner: body.owner || "Unassigned",
+      status: "open",
+      createdAt: new Date().toISOString()
+    };
+    const deliver = await sendTaskToProvider(task.provider, task);
+    const existing = await appState.storage.readTasks(tenantId);
+    existing.unshift({ ...task, delivery: deliver });
+    await appState.storage.writeTasks(tenantId, existing.slice(0, 200));
+    sendJson(res, 201, { task, delivery: deliver });
+    return;
+  }
+
+  if (pathname === "/api/tasks") {
+    const tasks = await appState.storage.readTasks(tenantId);
+    sendJson(res, 200, tasks);
+    return;
+  }
+
+  if (pathname === "/api/digest/latest") {
+    const digest = await appState.storage.readDigest(tenantId);
+    sendText(res, 200, digest || "No digest generated yet.");
+    return;
+  }
+
+  if (pathname === "/api/tenants") {
+    const tenantsDir = path.join(DATA_DIR, "tenants");
+    const tenants = fs.existsSync(tenantsDir)
+      ? fs.readdirSync(tenantsDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
+      : ["default"];
+    sendJson(res, 200, tenants);
+    return;
+  }
+
+  sendJson(res, 404, { error: "Unknown API route" });
+}
+
+const server = http.createServer(async (req, res) => {
+  const started = Date.now();
+  const urlObj = new URL(req.url, `http://${req.headers.host}`);
+  const pathname = urlObj.pathname;
+  const tenantId = resolveTenantId(urlObj, req.headers);
+  const user = userFromRequest(req);
+
+  try {
+    if (pathname.startsWith("/api/")) {
+      await routeApi(req, res, urlObj, tenantId, user);
+      return;
+    }
+
+    if (pathname === "/") {
+      sendFile(res, path.join(PUBLIC_DIR, "index.html"));
+      return;
+    }
+
+    const requested = path.join(PUBLIC_DIR, pathname.replace(/^\//, ""));
+    if (!requested.startsWith(PUBLIC_DIR)) {
+      sendText(res, 403, "Forbidden");
+      return;
+    }
+    sendFile(res, requested);
+  } catch (err) {
+    sendJson(res, 500, { error: err.message || "Internal server error" });
+  } finally {
+    log("info", "http_request", {
+      method: req.method,
+      path: pathname,
+      tenantId,
+      role: user ? user.role : "guest",
+      durationMs: Date.now() - started
+    });
+  }
+});
+
+async function bootstrap() {
+  await appState.storage.init();
+  await ensureDefaultUsers(appState.storage, "default");
+  initAutoPipeline();
+  startDigestScheduler();
+  server.listen(PORT, () => {
+    log("info", "server_started", { port: PORT, authRequired: AUTH_REQUIRED });
   });
 }
 
-const server = http.createServer((req, res) => {
-  const urlObj = new URL(req.url, `http://${req.headers.host}`);
-  const pathname = urlObj.pathname;
-  const report = buildReport();
-
-  if (pathname.startsWith("/api/")) {
-    if (pathname === "/api/interventions" && req.method === "POST") {
-      handlePostInterventions(req, res, report);
-      return;
-    }
-    if (pathname === "/api/rebuild" && req.method === "POST") {
-      triggerRossmannBuild("manual-api-trigger");
-      sendJson(res, 202, { accepted: true, status: getPipelineStatus() });
-      return;
-    }
-    if (req.method !== "GET") {
-      sendJson(res, 405, { error: "Method not allowed" });
-      return;
-    }
-    handleGetApi(pathname, urlObj, report, res);
-    return;
-  }
-
-  if (pathname === "/") {
-    sendFile(res, path.join(PUBLIC_DIR, "index.html"));
-    return;
-  }
-
-  const requested = path.join(PUBLIC_DIR, pathname.replace(/^\//, ""));
-  if (!requested.startsWith(PUBLIC_DIR)) {
-    sendText(res, 403, "Forbidden");
-    return;
-  }
-  sendFile(res, requested);
-});
-
-initAutoPipeline();
-
-server.listen(PORT, () => {
-  console.log(`Process Leak Detector running on http://localhost:${PORT}`);
+bootstrap().catch((err) => {
+  log("error", "bootstrap_failed", { error: err.message });
+  process.exit(1);
 });

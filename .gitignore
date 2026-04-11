@@ -3,3 +3,6 @@ npm-debug.log*
 .DS_Store
 *.env
 *.log
+server_out.log
+server_err.log
+data/tenants/
