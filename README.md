@@ -48,6 +48,9 @@ node server.js
 - `GET /api/export/brief-html`
 - `GET /api/pipeline-status`
 - `POST /api/rebuild`
+- `GET /api/data/control`
+- `GET /api/data/template`
+- `POST /api/data/import-report`
 - `GET /api/anomalies`
 - `GET /api/impact-ranking`
 - `GET /api/root-cause-clusters`
@@ -120,10 +123,35 @@ Most endpoints support multi-tenant routing via query (`?tenant=default`) or hea
 
 ## Dynamic data workflow
 
-1. Drop/replace `train.csv` and `store.csv` in your source path.
-2. Watcher auto-detects file changes and rebuilds `data/rossmann_report.json`.
-3. Frontend consumes APIs dynamically (`/api/report`, `/api/live`, `/api/pipeline-status`).
-4. Optional manual trigger: `POST /api/rebuild`.
+### A) Browser-first (easiest for beginners)
+
+1. Open **Data Control Center** in the dashboard.
+2. Click **Download template** to see required report JSON structure.
+3. Generate or edit your report JSON.
+4. Click **Import report JSON** and select the file.
+5. Dashboard updates live (SSE + API refresh).
+
+### B) CSV-to-report workflow (recommended for Rossmann raw data)
+
+1. Build a new report from CSV locally:
+```bash
+node src/buildRossmannReport.js "C:\path\to\train.csv" "C:\path\to\store.csv"
+```
+2. This writes `data/rossmann_report.json`.
+3. Import that JSON in the UI (Data Control Center) for instant update, or commit/push to deploy permanently.
+
+### C) Local auto-pipeline mode
+
+1. Place/replace `train.csv` and `store.csv` where pipeline can read them.
+2. Watcher auto-detects changes and triggers rebuild.
+3. You can also trigger manual rebuild via `POST /api/rebuild`.
+
+## Vercel persistence note
+
+- Vercel serverless runtime uses ephemeral filesystem (`/tmp`) at runtime.
+- Runtime imports are great for live sessions, but for long-term persistence you should:
+  1. commit generated JSON to GitHub, or
+  2. connect durable storage (Postgres / managed DB).
 
 ## Auth and RBAC quick start
 

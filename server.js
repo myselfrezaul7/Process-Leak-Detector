@@ -486,6 +486,43 @@ function getPipelineStatus(tenantId) {
   };
 }
 
+function normalizeImportedReport(payload) {
+  const report =
+    payload && typeof payload === "object" && payload.report && typeof payload.report === "object"
+      ? payload.report
+      : payload;
+  if (!report || typeof report !== "object") return null;
+  if (!report.summary || typeof report.summary !== "object") return null;
+  if (!Array.isArray(report.cases)) return null;
+
+  return {
+    generatedAt: report.generatedAt || new Date().toISOString(),
+    dataset: report.dataset || "custom-import",
+    summary: report.summary,
+    summaryCards: Array.isArray(report.summaryCards) ? report.summaryCards : [],
+    bottlenecks: Array.isArray(report.bottlenecks) ? report.bottlenecks : [],
+    recommendations: Array.isArray(report.recommendations) ? report.recommendations : [],
+    cases: report.cases
+  };
+}
+
+function buildDataControlStatus(tenantId, report) {
+  const mode = IS_SERVERLESS ? "serverless-ephemeral" : "filesystem-persistent";
+  return {
+    tenantId,
+    dataset: report.dataset || "unknown",
+    generatedAt: report.generatedAt || null,
+    storageMode: mode,
+    dataDir: DATA_DIR,
+    serverless: IS_SERVERLESS,
+    pipeline: getPipelineStatus(tenantId),
+    hints: [
+      "Use POST /api/data/import-report to replace the live report with custom JSON.",
+      "Use POST /api/rebuild to rebuild from train.csv/store.csv paths when pipeline is enabled."
+    ]
+  };
+}
+
 async function refreshAlertsForTenant(tenantId, report) {
   const anomalies = detectAnomalies(report);
   const derived = alertsFromAnomalies(anomalies);
@@ -871,6 +908,71 @@ async function routeApi(req, res, urlObj, tenantId, user) {
 
   if (pathname === "/api/pipeline-status") {
     sendJson(res, 200, getPipelineStatus(tenantId));
+    return;
+  }
+
+  if (pathname === "/api/data/control") {
+    sendJson(res, 200, buildDataControlStatus(tenantId, report));
+    return;
+  }
+
+  if (pathname === "/api/data/template") {
+    sendJson(res, 200, {
+      generatedAt: new Date().toISOString(),
+      dataset: "custom-import",
+      summary: {
+        totalStores: 0,
+        estimatedLeakEur: 0,
+        topLeakArea: "n/a"
+      },
+      summaryCards: [
+        { label: "Dataset", value: "custom-import" },
+        { label: "Stores", value: "0" },
+        { label: "Leak estimate", value: "0 EUR" }
+      ],
+      bottlenecks: [],
+      recommendations: [],
+      cases: []
+    });
+    return;
+  }
+
+  if (pathname === "/api/data/import-report" && req.method === "POST") {
+    if (!checkRole(user, ["ceo", "ops"])) {
+      sendJson(res, 403, { error: "Forbidden" });
+      return;
+    }
+    const body = await readBodyJson(req);
+    const normalized = normalizeImportedReport(body);
+    if (!normalized) {
+      sendJson(res, 400, { error: "Invalid report format. Required fields: summary (object), cases (array)." });
+      return;
+    }
+
+    await appState.storage.writeReport(tenantId, normalized);
+    await refreshAlertsForTenant(tenantId, normalized);
+    await appendAudit(tenantId, user ? user.email : "system", "report.import", {
+      dataset: normalized.dataset,
+      cases: normalized.cases.length
+    });
+    invalidateTenantCache(tenantId);
+
+    pushSse(tenantId, "report", {
+      dataset: normalized.dataset,
+      generatedAt: normalized.generatedAt
+    });
+    pushSse(tenantId, "snapshot", {
+      live: buildLiveSnapshot(normalized),
+      pipeline: getPipelineStatus(tenantId),
+      anomalyCount: detectAnomalies(normalized).length
+    });
+
+    sendJson(res, 201, {
+      ok: true,
+      dataset: normalized.dataset,
+      generatedAt: normalized.generatedAt,
+      cases: normalized.cases.length
+    });
     return;
   }
 

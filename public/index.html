@@ -95,6 +95,27 @@
         <div id="alert-feed" class="alert-feed" aria-live="polite"></div>
       </section>
 
+      <section class="card" id="data-control">
+        <h2>Data Control Center</h2>
+        <p class="helper">
+          Beginner-friendly data operations: import a new report JSON, download current data, and monitor live data mode.
+        </p>
+        <div class="trust-row" aria-label="Data control status">
+          <div class="trust-pill" id="data-mode">Mode: checking...</div>
+          <div class="trust-pill" id="data-generated">Generated: --</div>
+          <div class="trust-pill" id="data-tenant">Tenant: --</div>
+        </div>
+        <div class="intervention-form data-control-form">
+          <input id="report-file" type="file" accept=".json,application/json" />
+          <button class="btn btn-primary" id="report-import" type="button">Import report JSON</button>
+          <button class="btn btn-ghost" id="report-download" type="button">Download current report</button>
+          <button class="btn btn-ghost" id="report-template" type="button">Download template</button>
+        </div>
+        <div id="data-control-status" class="sim-output" aria-live="polite">
+          Tip: use this for fast updates. For large raw CSV files, rebuild offline then import generated report JSON.
+        </div>
+      </section>
+
       <section class="two-col">
         <article class="card">
           <h2>What-If Simulator</h2>

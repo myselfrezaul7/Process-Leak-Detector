@@ -520,6 +520,70 @@ async function refreshPipelineStatus() {
   return data;
 }
 
+function setDataControlStatus(message, isError = false) {
+  const el = document.getElementById("data-control-status");
+  if (!el) return;
+  el.textContent = message;
+  el.style.borderColor = isError ? "rgba(248, 113, 113, 0.45)" : "rgba(255, 255, 255, 0.12)";
+}
+
+function renderDataControl(meta) {
+  const mode = document.getElementById("data-mode");
+  const generated = document.getElementById("data-generated");
+  const tenant = document.getElementById("data-tenant");
+  if (mode) mode.textContent = `Mode: ${meta.storageMode || "unknown"}`;
+  if (generated) {
+    generated.textContent = meta.generatedAt
+      ? `Generated: ${new Date(meta.generatedAt).toLocaleString()}`
+      : "Generated: n/a";
+  }
+  if (tenant) tenant.textContent = `Tenant: ${meta.tenantId || "default"}`;
+}
+
+async function refreshDataControl() {
+  const res = await fetch("/api/data/control");
+  if (!res.ok) throw new Error("Unable to fetch data control metadata.");
+  const meta = await res.json();
+  renderDataControl(meta);
+  return meta;
+}
+
+async function importReportFromFile() {
+  const input = document.getElementById("report-file");
+  if (!input || !input.files || !input.files[0]) {
+    setDataControlStatus("Select a report JSON file first.", true);
+    return;
+  }
+
+  const file = input.files[0];
+  const text = await file.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (err) {
+    setDataControlStatus("Invalid JSON file. Please upload a valid report JSON.", true);
+    return;
+  }
+
+  setDataControlStatus("Importing report...");
+  const res = await fetch("/api/data/import-report", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ report: parsed })
+  });
+  const result = await res.json();
+  if (!res.ok) {
+    setDataControlStatus(result.error || "Failed to import report.", true);
+    return;
+  }
+
+  setDataControlStatus(
+    `Imported ${result.dataset || "report"} with ${number(result.cases || 0)} entities. Dashboard is now live on this dataset.`
+  );
+  input.value = "";
+  await Promise.all([loadDashboardData(), refreshDataControl()]);
+}
+
 let latestPipelineSuccess = null;
 
 function connectRealtimeStream() {
@@ -536,6 +600,35 @@ function connectRealtimeStream() {
     } catch (err) {
       // noop
     }
+  });
+  stream.addEventListener("pipeline", (ev) => {
+    try {
+      const data = JSON.parse(ev.data);
+      if (data.status) renderPipelineStatus(data.status);
+      if (data.status && data.status.lastSuccessAt && data.status.lastSuccessAt !== latestPipelineSuccess) {
+        latestPipelineSuccess = data.status.lastSuccessAt;
+        loadDashboardData().catch(() => {});
+        refreshDataControl().catch(() => {});
+      }
+    } catch (err) {
+      // noop
+    }
+  });
+  stream.addEventListener("report", () => {
+    loadDashboardData().catch(() => {});
+    refreshDataControl().catch(() => {});
+  });
+  stream.addEventListener("intervention", () => {
+    refreshInterventions().catch(() => {});
+    refreshImpactAndClusters().catch(() => {});
+    refreshAudit().catch(() => {});
+  });
+  stream.addEventListener("scenario", () => {
+    refreshScenarios().catch(() => {});
+  });
+  stream.addEventListener("approval", () => {
+    refreshApprovals().catch(() => {});
+    refreshAudit().catch(() => {});
   });
   stream.onerror = () => {
     // let browser auto-reconnect
@@ -835,6 +928,30 @@ async function run() {
 
   const firstPipeline = await refreshPipelineStatus();
   latestPipelineSuccess = firstPipeline.lastSuccessAt || null;
+  await refreshDataControl().catch(() => {});
+
+  const reportImportBtn = document.getElementById("report-import");
+  if (reportImportBtn) {
+    reportImportBtn.addEventListener("click", () => {
+      importReportFromFile().catch(() => {
+        setDataControlStatus("Report import failed due to a network or validation error.", true);
+      });
+    });
+  }
+
+  const reportDownloadBtn = document.getElementById("report-download");
+  if (reportDownloadBtn) {
+    reportDownloadBtn.addEventListener("click", () => {
+      downloadFile("/api/report", "current-report.json").catch(() => {});
+    });
+  }
+
+  const reportTemplateBtn = document.getElementById("report-template");
+  if (reportTemplateBtn) {
+    reportTemplateBtn.addEventListener("click", () => {
+      downloadFile("/api/data/template", "report-template.json").catch(() => {});
+    });
+  }
 
   const studioRun = document.getElementById("studio-run");
   if (studioRun) {
