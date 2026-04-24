@@ -1071,10 +1071,10 @@ if (require.main === module) {
     });
 }
 
-module.exports = {
-  handler: async (req, res) => {
-    await ensureReady();
-    return requestHandler(req, res);
-  },
-  ensureReady
+const vercelHandler = async (req, res) => {
+  await ensureReady();
+  return requestHandler(req, res);
 };
+
+module.exports = vercelHandler;
+module.exports.ensureReady = ensureReady;
