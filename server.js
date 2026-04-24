@@ -20,7 +20,27 @@ const { ensureDefaultUsers, issueToken, verifyToken, authenticate, parseAuthHead
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.join(__dirname, "public");
-const DATA_DIR = path.join(__dirname, "data");
+const SEED_DATA_DIR = path.join(__dirname, "data");
+const TMP_DATA_DIR = path.join("/tmp", "pld-data");
+
+function canWriteToDir(dir) {
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const probe = path.join(dir, `.probe-${Date.now()}-${Math.floor(Math.random() * 10000)}`);
+    fs.writeFileSync(probe, "ok", "utf8");
+    fs.unlinkSync(probe);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+const DATA_DIR = process.env.DATA_DIR
+  ? process.env.DATA_DIR
+  : canWriteToDir(SEED_DATA_DIR)
+    ? SEED_DATA_DIR
+    : TMP_DATA_DIR;
+const IS_SERVERLESS = DATA_DIR !== SEED_DATA_DIR || Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || "pld-dev-token-change-this";
 const AUTH_REQUIRED = String(process.env.AUTH_REQUIRED || "false").toLowerCase() === "true";
 const REPORT_CACHE_TTL_MS = Number(process.env.REPORT_CACHE_TTL_MS || 8000);
@@ -30,6 +50,7 @@ function resolveTrainCsvPath() {
   const candidates = [
     process.env.ROSSMANN_TRAIN_PATH,
     path.join(DATA_DIR, "train.csv"),
+    path.join(SEED_DATA_DIR, "train.csv"),
     "C:\\Users\\mysel\\OneDrive\\Desktop\\Azure\\rossmann-store-sales\\train.csv"
   ].filter(Boolean);
   return candidates.find((p) => fs.existsSync(p)) || null;
@@ -39,6 +60,7 @@ function resolveStoreCsvPath() {
   const candidates = [
     process.env.ROSSMANN_STORE_PATH,
     path.join(DATA_DIR, "store.csv"),
+    path.join(SEED_DATA_DIR, "store.csv"),
     "C:\\Users\\mysel\\OneDrive\\Desktop\\Azure\\rossmann-store-sales\\store.csv"
   ].filter(Boolean);
   return candidates.find((p) => fs.existsSync(p)) || null;
@@ -422,6 +444,32 @@ function buildBriefHtml(text) {
   </style></head><body><h1>Executive Brief</h1><pre>${safe}</pre><p class="hint">Use browser print to export as PDF.</p></body></html>`;
 }
 
+async function seedRuntimeDataIfNeeded() {
+  if (!IS_SERVERLESS) return;
+  const sourceReport = path.join(SEED_DATA_DIR, "rossmann_report.json");
+  const targetTenantDir = path.join(DATA_DIR, "tenants", "default");
+  const targetReport = path.join(targetTenantDir, "report.json");
+  const targetInterventions = path.join(targetTenantDir, "interventions.json");
+  const sourceInterventions = path.join(SEED_DATA_DIR, "interventions.json");
+
+  try {
+    if (!fs.existsSync(targetReport) && fs.existsSync(sourceReport)) {
+      fs.mkdirSync(targetTenantDir, { recursive: true });
+      fs.copyFileSync(sourceReport, targetReport);
+    }
+    if (!fs.existsSync(targetInterventions)) {
+      fs.mkdirSync(targetTenantDir, { recursive: true });
+      if (fs.existsSync(sourceInterventions)) {
+        fs.copyFileSync(sourceInterventions, targetInterventions);
+      } else {
+        fs.writeFileSync(targetInterventions, "[]", "utf8");
+      }
+    }
+  } catch (err) {
+    log("warn", "serverless_seed_failed", { error: err.message });
+  }
+}
+
 function getPipelineStatus(tenantId) {
   return {
     tenantId,
@@ -498,6 +546,10 @@ function registerFileWatcher(filePath) {
 }
 
 function initAutoPipeline() {
+  if (IS_SERVERLESS) {
+    appState.pipeline.enabled = false;
+    return;
+  }
   if (!appState.pipeline.sourceTrainPath) {
     appState.pipeline.enabled = false;
     return;
@@ -522,6 +574,7 @@ async function runDigestAutomation() {
 }
 
 function startDigestScheduler() {
+  if (IS_SERVERLESS) return;
   runDigestAutomation().catch(() => {});
   setInterval(() => {
     runDigestAutomation().catch(() => {});
@@ -529,6 +582,7 @@ function startDigestScheduler() {
 }
 
 function startRealtimeBroadcast() {
+  if (IS_SERVERLESS) return;
   setInterval(async () => {
     const tenantsDir = path.join(DATA_DIR, "tenants");
     const tenantIds = fs.existsSync(tenantsDir)
@@ -948,7 +1002,7 @@ async function routeApi(req, res, urlObj, tenantId, user) {
   sendJson(res, 404, { error: "Unknown API route" });
 }
 
-const server = http.createServer(async (req, res) => {
+async function requestHandler(req, res) {
   const started = Date.now();
   const urlObj = new URL(req.url, `http://${req.headers.host}`);
   const pathname = urlObj.pathname;
@@ -983,20 +1037,44 @@ const server = http.createServer(async (req, res) => {
       durationMs: Date.now() - started
     });
   }
-});
+}
 
 async function bootstrap() {
+  await seedRuntimeDataIfNeeded();
   await appState.storage.init();
   await ensureDefaultUsers(appState.storage, "default");
   initAutoPipeline();
   startDigestScheduler();
   startRealtimeBroadcast();
-  server.listen(PORT, () => {
-    log("info", "server_started", { port: PORT, authRequired: AUTH_REQUIRED });
-  });
 }
 
-bootstrap().catch((err) => {
-  log("error", "bootstrap_failed", { error: err.message });
-  process.exit(1);
-});
+let bootstrapPromise = null;
+
+async function ensureReady() {
+  if (!bootstrapPromise) {
+    bootstrapPromise = bootstrap();
+  }
+  await bootstrapPromise;
+}
+
+if (require.main === module) {
+  ensureReady()
+    .then(() => {
+      const server = http.createServer(requestHandler);
+      server.listen(PORT, () => {
+        log("info", "server_started", { port: PORT, authRequired: AUTH_REQUIRED });
+      });
+    })
+    .catch((err) => {
+      log("error", "bootstrap_failed", { error: err.message });
+      process.exit(1);
+    });
+}
+
+module.exports = {
+  handler: async (req, res) => {
+    await ensureReady();
+    return requestHandler(req, res);
+  },
+  ensureReady
+};
