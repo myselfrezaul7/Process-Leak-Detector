@@ -75,8 +75,78 @@ function alertsFromAnomalies(anomalies) {
   }));
 }
 
+function computeImpactScore(item) {
+  const leak = Number(item.leakEur || 0);
+  const leakScore = Math.min(55, Math.round(leak / 15000));
+  const riskScore = item.status === "lost" ? 22 : item.status === "open" ? 14 : 6;
+  const confidence = Number(item.confidencePct || 70);
+  const confidenceScore = Math.round((confidence / 100) * 15);
+  const readiness = item.status === "planned" ? 8 : item.status === "approved" ? 12 : 6;
+  const total = Math.max(0, Math.min(100, leakScore + riskScore + confidenceScore + readiness));
+  return total;
+}
+
+function buildImpactRanking(report, interventions) {
+  const interventionByEntity = new Map();
+  (interventions || []).forEach((i) => {
+    if (i.entityId) interventionByEntity.set(String(i.entityId).toLowerCase(), i);
+  });
+
+  return (report.cases || [])
+    .map((c) => {
+      const key = String(c.entityId || c.caseId || "").toLowerCase();
+      const linked = interventionByEntity.get(key);
+      const impactScore = computeImpactScore({
+        ...c,
+        confidencePct: linked ? linked.confidencePct : 70,
+        status: linked ? linked.status : c.status
+      });
+      return {
+        id: c.entityId || c.caseId,
+        leakEur: Number(c.leakEur || 0),
+        primaryDriver: c.primaryDriver || c.currentStep || "unknown",
+        segment: c.segment || c.processArea || "unknown",
+        impactScore
+      };
+    })
+    .sort((a, b) => b.impactScore - a.impactScore)
+    .slice(0, 80);
+}
+
+function clusterRootCauses(report) {
+  const items = report.cases || [];
+  const map = new Map();
+  items.forEach((c) => {
+    const key = `${c.primaryDriver || c.currentStep || "unknown"}|${c.storeType || "unknown"}`;
+    if (!map.has(key)) {
+      map.set(key, {
+        id: `cluster-${map.size + 1}`,
+        rootCause: c.primaryDriver || c.currentStep || "unknown",
+        storeType: c.storeType || "unknown",
+        count: 0,
+        totalLeakEur: 0
+      });
+    }
+    const row = map.get(key);
+    row.count += 1;
+    row.totalLeakEur += Number(c.leakEur || 0);
+  });
+
+  return Array.from(map.values())
+    .map((r) => ({
+      ...r,
+      avgLeakEur: Math.round(r.totalLeakEur / Math.max(1, r.count)),
+      totalLeakEur: Math.round(r.totalLeakEur)
+    }))
+    .sort((a, b) => b.totalLeakEur - a.totalLeakEur)
+    .slice(0, 20);
+}
+
 module.exports = {
   detectAnomalies,
   explainEntity,
-  alertsFromAnomalies
+  alertsFromAnomalies,
+  computeImpactScore,
+  buildImpactRanking,
+  clusterRootCauses
 };

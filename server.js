@@ -8,7 +8,13 @@ const { Storage } = require("./src/storage");
 const { resolveTenantId, normalizeTenantId } = require("./src/tenant");
 const { TTLCache } = require("./src/cache");
 const { log } = require("./src/logger");
-const { detectAnomalies, explainEntity, alertsFromAnomalies } = require("./src/intelligence");
+const {
+  detectAnomalies,
+  explainEntity,
+  alertsFromAnomalies,
+  buildImpactRanking,
+  clusterRootCauses
+} = require("./src/intelligence");
 const { buildDigest, sendTaskToProvider } = require("./src/automation");
 const { ensureDefaultUsers, issueToken, verifyToken, authenticate, parseAuthHeader, hasRole } = require("./src/auth");
 
@@ -42,6 +48,7 @@ const appState = {
   startedAt: Date.now(),
   storage: new Storage(DATA_DIR),
   cache: new TTLCache(REPORT_CACHE_TTL_MS),
+  sseClients: new Map(),
   pipeline: {
     enabled: false,
     sourceTrainPath: resolveTrainCsvPath(),
@@ -126,8 +133,52 @@ function cacheKey(prefix, tenantId) {
 }
 
 function invalidateTenantCache(tenantId) {
-  const keys = ["report", "summary", "live", "bottlenecks", "cases", "recommendations", "anomalies", "alerts"];
+  const keys = [
+    "report",
+    "summary",
+    "live",
+    "bottlenecks",
+    "cases",
+    "recommendations",
+    "anomalies",
+    "alerts",
+    "impact",
+    "clusters",
+    "scenarios",
+    "approvals",
+    "audit"
+  ];
   keys.forEach((k) => appState.cache.del(cacheKey(k, tenantId)));
+}
+
+function sseSet(tenantId) {
+  const id = normalizeTenantId(tenantId);
+  if (!appState.sseClients.has(id)) {
+    appState.sseClients.set(id, new Set());
+  }
+  return appState.sseClients.get(id);
+}
+
+function pushSse(tenantId, eventName, payload) {
+  const clients = sseSet(tenantId);
+  const msg = `event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`;
+  clients.forEach((res) => {
+    try {
+      res.write(msg);
+    } catch (err) {
+      // ignore stale clients
+    }
+  });
+}
+
+async function appendAudit(tenantId, actor, action, detail = {}) {
+  await appState.storage.appendAudit(tenantId, {
+    id: `audit-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+    actor: actor || "system",
+    action,
+    detail,
+    createdAt: new Date().toISOString()
+  });
 }
 
 function buildEventReportFromLegacyEvents() {
@@ -260,6 +311,49 @@ function runSimulation(report, query) {
   };
 }
 
+function runSimulationFromInputs(report, inputs) {
+  const qp = new URLSearchParams();
+  qp.set("promo", String(inputs.promo || 0));
+  qp.set("closure", String(inputs.closure || 0));
+  qp.set("conversion", String(inputs.conversion || 0));
+  return runSimulation(report, qp);
+}
+
+function scenarioComparison(base, candidate) {
+  return {
+    baseId: base.id,
+    candidateId: candidate.id,
+    baselineLeakDeltaEur: (candidate.result && candidate.result.projectedLeakEur) - (base.result && base.result.projectedLeakEur),
+    recoveredDeltaEur: (candidate.result && candidate.result.recoveredEur) - (base.result && base.result.recoveredEur),
+    roiDelta: (candidate.result && candidate.result.roiScore) - (base.result && base.result.roiScore)
+  };
+}
+
+function buildDecisionStudio(report, scenarios, interventions, question) {
+  const ranking = buildImpactRanking(report, interventions || []);
+  const top = ranking[0];
+  const latestScenario = scenarios && scenarios.length ? scenarios[0] : null;
+  const diagnosis = top
+    ? `Highest impact entity is ${top.id} with score ${top.impactScore} driven by ${top.primaryDriver}.`
+    : "No high-impact entity detected.";
+  const recommendation = latestScenario
+    ? `Use scenario "${latestScenario.name}" and execute focused action on ${top ? top.id : "top entity"}.`
+    : `Create a scenario and prioritize action on ${top ? top.id : "top impact entities"}.`;
+  return {
+    question: question || "",
+    diagnosis,
+    recommendation,
+    suggestedTask: {
+      provider: "jira",
+      title: `Intervention for ${top ? top.id : "high impact entity"}`,
+      description: recommendation
+    },
+    scenarioHint: latestScenario
+      ? `Latest scenario "${latestScenario.name}" estimates recovery ${latestScenario.result.recoveredEur} EUR.`
+      : "No saved scenario yet."
+  };
+}
+
 function answerCopilot(report, question) {
   const q = String(question || "").toLowerCase();
   const summary = report.summary || {};
@@ -374,10 +468,14 @@ async function triggerRossmannBuild(tenantId, reason = "manual") {
     const report = await buildRossmannReport(appState.pipeline.sourceTrainPath, appState.pipeline.sourceStorePath);
     await appState.storage.writeReport(t, report);
     await refreshAlertsForTenant(t, report);
+    await appendAudit(t, "system", "pipeline.rebuild.success", { reason });
     invalidateTenantCache(t);
     appState.pipeline.lastSuccessAt = new Date().toISOString();
+    pushSse(t, "pipeline", { status: getPipelineStatus(t) });
   } catch (err) {
     appState.pipeline.lastError = err && err.message ? err.message : "Build failed";
+    await appendAudit(t, "system", "pipeline.rebuild.error", { reason, error: appState.pipeline.lastError });
+    pushSse(t, "pipeline", { status: getPipelineStatus(t) });
   } finally {
     appState.pipeline.lastDurationMs = Date.now() - started;
     appState.pipeline.isBuilding = false;
@@ -430,6 +528,31 @@ function startDigestScheduler() {
   }, DIGEST_INTERVAL_MS);
 }
 
+function startRealtimeBroadcast() {
+  setInterval(async () => {
+    const tenantsDir = path.join(DATA_DIR, "tenants");
+    const tenantIds = fs.existsSync(tenantsDir)
+      ? fs.readdirSync(tenantsDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
+      : ["default"];
+
+    for (const tenantId of tenantIds) {
+      const clients = sseSet(tenantId);
+      if (!clients.size) continue;
+      try {
+        const report = await getReport(tenantId);
+        const payload = {
+          live: buildLiveSnapshot(report),
+          pipeline: getPipelineStatus(tenantId),
+          anomalyCount: detectAnomalies(report).length
+        };
+        pushSse(tenantId, "snapshot", payload);
+      } catch (err) {
+        // keep loop resilient
+      }
+    }
+  }, 7000);
+}
+
 async function routeApi(req, res, urlObj, tenantId, user) {
   const pathname = urlObj.pathname;
   const report = await getReport(tenantId);
@@ -451,10 +574,12 @@ async function routeApi(req, res, urlObj, tenantId, user) {
     const body = await readBodyJson(req);
     const principal = await authenticate(appState.storage, tenantId, body.email, body.password);
     if (!principal) {
+      await appendAudit(tenantId, body.email || "unknown", "auth.login.failed", {});
       sendJson(res, 401, { error: "Invalid credentials" });
       return;
     }
     const token = issueToken(principal, TOKEN_SECRET);
+    await appendAudit(tenantId, principal.email, "auth.login.success", { role: principal.role });
     sendJson(res, 200, { token, user: { email: principal.email, role: principal.role, name: principal.name } });
     return;
   }
@@ -465,6 +590,29 @@ async function routeApi(req, res, urlObj, tenantId, user) {
       return;
     }
     sendJson(res, 200, { user });
+    return;
+  }
+
+  if (pathname === "/api/stream") {
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive"
+    });
+    res.write(`event: ready\ndata: ${JSON.stringify({ tenantId, ts: new Date().toISOString() })}\n\n`);
+    const clients = sseSet(tenantId);
+    clients.add(res);
+    const heartbeat = setInterval(() => {
+      try {
+        res.write(`event: heartbeat\ndata: ${JSON.stringify({ ts: new Date().toISOString() })}\n\n`);
+      } catch (err) {
+        // ignore
+      }
+    }, 15000);
+    req.on("close", () => {
+      clearInterval(heartbeat);
+      clients.delete(res);
+    });
     return;
   }
 
@@ -484,6 +632,25 @@ async function routeApi(req, res, urlObj, tenantId, user) {
     const anomalies = detectAnomalies(report);
     appState.cache.set(key, anomalies, 7000);
     return sendJson(res, 200, anomalies);
+  }
+
+  if (pathname === "/api/impact-ranking") {
+    const key = cacheKey("impact", tenantId);
+    const cached = appState.cache.get(key);
+    if (cached) return sendJson(res, 200, cached);
+    const interventions = (await appState.storage.readInterventions(tenantId)).map((i) => withInterventionMetrics(i, report));
+    const ranking = buildImpactRanking(report, interventions);
+    appState.cache.set(key, ranking, 7000);
+    return sendJson(res, 200, ranking);
+  }
+
+  if (pathname === "/api/root-cause-clusters") {
+    const key = cacheKey("clusters", tenantId);
+    const cached = appState.cache.get(key);
+    if (cached) return sendJson(res, 200, cached);
+    const clusters = clusterRootCauses(report);
+    appState.cache.set(key, clusters, 7000);
+    return sendJson(res, 200, clusters);
   }
 
   if (pathname === "/api/explain") {
@@ -558,11 +725,68 @@ async function routeApi(req, res, urlObj, tenantId, user) {
       if (idx >= 0) existing[idx] = { ...existing[idx], ...item, createdAt: existing[idx].createdAt || now };
       else existing.unshift(item);
       await appState.storage.writeInterventions(tenantId, existing.slice(0, 150));
+      await appendAudit(tenantId, user ? user.email : "system", "intervention.upsert", { id: item.id, action: item.action });
+      pushSse(tenantId, "intervention", { id: item.id, status: item.status });
       sendJson(res, 201, withInterventionMetrics(item, report));
       return;
     }
     const items = await appState.storage.readInterventions(tenantId);
     sendJson(res, 200, items.map((i) => withInterventionMetrics(i, report)));
+    return;
+  }
+
+  if (pathname === "/api/scenarios") {
+    if (req.method === "POST") {
+      if (!checkRole(user, ["ceo", "ops"])) {
+        sendJson(res, 403, { error: "Forbidden" });
+        return;
+      }
+      const body = await readBodyJson(req);
+      const scenarios = await appState.storage.readScenarios(tenantId);
+      const scenario = {
+        id: body.id || `scn-${Date.now()}`,
+        name: body.name || `Scenario ${scenarios.length + 1}`,
+        notes: body.notes || "",
+        inputs: {
+          promo: Number(body.promo || 0),
+          closure: Number(body.closure || 0),
+          conversion: Number(body.conversion || 0)
+        },
+        result: runSimulationFromInputs(report, body),
+        createdAt: new Date().toISOString(),
+        createdBy: user ? user.email : "system"
+      };
+      scenarios.unshift(scenario);
+      await appState.storage.writeScenarios(tenantId, scenarios.slice(0, 120));
+      await appendAudit(tenantId, user ? user.email : "system", "scenario.create", { id: scenario.id, name: scenario.name });
+      pushSse(tenantId, "scenario", { id: scenario.id, name: scenario.name });
+      sendJson(res, 201, scenario);
+      return;
+    }
+    const scenarios = await appState.storage.readScenarios(tenantId);
+    sendJson(res, 200, scenarios);
+    return;
+  }
+
+  if (pathname === "/api/scenarios/compare") {
+    const scenarios = await appState.storage.readScenarios(tenantId);
+    const baseId = urlObj.searchParams.get("base");
+    const candidateId = urlObj.searchParams.get("candidate");
+    const base = scenarios.find((s) => s.id === baseId);
+    const candidate = scenarios.find((s) => s.id === candidateId);
+    if (!base || !candidate) {
+      sendJson(res, 404, { error: "Both scenarios are required" });
+      return;
+    }
+    sendJson(res, 200, scenarioComparison(base, candidate));
+    return;
+  }
+
+  if (pathname === "/api/decision-studio") {
+    const scenarios = await appState.storage.readScenarios(tenantId);
+    const interventions = (await appState.storage.readInterventions(tenantId)).map((i) => withInterventionMetrics(i, report));
+    const decision = buildDecisionStudio(report, scenarios, interventions, urlObj.searchParams.get("q") || "");
+    sendJson(res, 200, decision);
     return;
   }
 
@@ -625,6 +849,8 @@ async function routeApi(req, res, urlObj, tenantId, user) {
     const existing = await appState.storage.readTasks(tenantId);
     existing.unshift({ ...task, delivery: deliver });
     await appState.storage.writeTasks(tenantId, existing.slice(0, 200));
+    await appendAudit(tenantId, user ? user.email : "system", "task.create", { id: task.id, provider: task.provider });
+    pushSse(tenantId, "task", { id: task.id, title: task.title, delivered: deliver.delivered });
     sendJson(res, 201, { task, delivery: deliver });
     return;
   }
@@ -635,9 +861,78 @@ async function routeApi(req, res, urlObj, tenantId, user) {
     return;
   }
 
+  if (pathname === "/api/approvals") {
+    if (req.method === "POST") {
+      if (!checkRole(user, ["ceo", "ops"])) {
+        sendJson(res, 403, { error: "Forbidden" });
+        return;
+      }
+      const body = await readBodyJson(req);
+      const approvals = await appState.storage.readApprovals(tenantId);
+      const item = {
+        id: body.id || `apr-${Date.now()}`,
+        interventionId: body.interventionId || "",
+        stage: body.stage || "ops-review",
+        status: body.status || "pending",
+        requestedBy: user ? user.email : "system",
+        assignedToRole: body.assignedToRole || "ceo",
+        notes: body.notes || "",
+        createdAt: new Date().toISOString(),
+        decidedAt: null,
+        decidedBy: null
+      };
+      approvals.unshift(item);
+      await appState.storage.writeApprovals(tenantId, approvals.slice(0, 200));
+      await appendAudit(tenantId, user ? user.email : "system", "approval.request", { id: item.id, interventionId: item.interventionId });
+      pushSse(tenantId, "approval", { id: item.id, status: item.status });
+      sendJson(res, 201, item);
+      return;
+    }
+    const approvals = await appState.storage.readApprovals(tenantId);
+    sendJson(res, 200, approvals);
+    return;
+  }
+
+  if (pathname === "/api/approvals/action" && req.method === "POST") {
+    if (!checkRole(user, ["ceo", "ops"])) {
+      sendJson(res, 403, { error: "Forbidden" });
+      return;
+    }
+    const body = await readBodyJson(req);
+    const approvals = await appState.storage.readApprovals(tenantId);
+    const idx = approvals.findIndex((a) => a.id === body.id);
+    if (idx < 0) {
+      sendJson(res, 404, { error: "Approval not found" });
+      return;
+    }
+    const nextStatus = body.action === "approve" ? "approved" : body.action === "reject" ? "rejected" : "pending";
+    approvals[idx] = {
+      ...approvals[idx],
+      status: nextStatus,
+      decidedAt: new Date().toISOString(),
+      decidedBy: user ? user.email : "system",
+      notes: body.notes || approvals[idx].notes || ""
+    };
+    await appState.storage.writeApprovals(tenantId, approvals);
+    await appendAudit(tenantId, user ? user.email : "system", "approval.action", { id: body.id, action: body.action });
+    pushSse(tenantId, "approval", { id: body.id, status: nextStatus });
+    sendJson(res, 200, approvals[idx]);
+    return;
+  }
+
   if (pathname === "/api/digest/latest") {
     const digest = await appState.storage.readDigest(tenantId);
     sendText(res, 200, digest || "No digest generated yet.");
+    return;
+  }
+
+  if (pathname === "/api/audit") {
+    if (!checkRole(user, ["ceo", "ops"])) {
+      sendJson(res, 403, { error: "Forbidden" });
+      return;
+    }
+    const audit = await appState.storage.readAudit(tenantId);
+    sendJson(res, 200, audit);
     return;
   }
 
@@ -695,6 +990,7 @@ async function bootstrap() {
   await ensureDefaultUsers(appState.storage, "default");
   initAutoPipeline();
   startDigestScheduler();
+  startRealtimeBroadcast();
   server.listen(PORT, () => {
     log("info", "server_started", { port: PORT, authRequired: AUTH_REQUIRED });
   });

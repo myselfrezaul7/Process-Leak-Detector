@@ -25,6 +25,9 @@ function buildPaths(baseDataDir, tenantId) {
     interventions: path.join(dir, "interventions.json"),
     alerts: path.join(dir, "alerts.json"),
     tasks: path.join(dir, "tasks.json"),
+    scenarios: path.join(dir, "scenarios.json"),
+    approvals: path.join(dir, "approvals.json"),
+    audit: path.join(dir, "audit.json"),
     users: path.join(dir, "users.json"),
     digest: path.join(dir, "digest_latest.txt")
   };
@@ -107,6 +110,15 @@ class Storage {
     }
     if (!(await fileExists(target.tasks))) {
       await writeJsonFile(target.tasks, []);
+    }
+    if (!(await fileExists(target.scenarios))) {
+      await writeJsonFile(target.scenarios, []);
+    }
+    if (!(await fileExists(target.approvals))) {
+      await writeJsonFile(target.approvals, []);
+    }
+    if (!(await fileExists(target.audit))) {
+      await writeJsonFile(target.audit, []);
     }
   }
 
@@ -206,6 +218,38 @@ class Storage {
     } catch (err) {
       return [];
     }
+  }
+
+  async readScenarios(tenantId) {
+    const p = this.tenantPaths(tenantId);
+    return readJsonFile(p.scenarios, []);
+  }
+
+  async writeScenarios(tenantId, items) {
+    const p = this.tenantPaths(tenantId);
+    await writeJsonFile(p.scenarios, items);
+  }
+
+  async readApprovals(tenantId) {
+    const p = this.tenantPaths(tenantId);
+    return readJsonFile(p.approvals, []);
+  }
+
+  async writeApprovals(tenantId, items) {
+    const p = this.tenantPaths(tenantId);
+    await writeJsonFile(p.approvals, items);
+  }
+
+  async readAudit(tenantId) {
+    const p = this.tenantPaths(tenantId);
+    return readJsonFile(p.audit, []);
+  }
+
+  async appendAudit(tenantId, entry) {
+    const items = await this.readAudit(tenantId);
+    items.unshift(entry);
+    const p = this.tenantPaths(tenantId);
+    await writeJsonFile(p.audit, items.slice(0, 800));
   }
 }
 

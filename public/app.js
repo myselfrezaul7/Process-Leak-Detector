@@ -214,10 +214,246 @@ function renderInterventions(items) {
     .join("");
 }
 
+function renderImpactRanking(items) {
+  const list = document.getElementById("impact-list");
+  if (!list) return;
+  if (!items || !items.length) {
+    list.textContent = "No impact ranking available.";
+    return;
+  }
+  list.innerHTML = items
+    .slice(0, 8)
+    .map(
+      (i) =>
+        `<div class="intervention-item"><strong>${i.id}</strong> · impact ${i.impactScore}/100 · leak ${eur(i.leakEur)} · ${i.primaryDriver}</div>`
+    )
+    .join("");
+}
+
+function renderClusters(items) {
+  const list = document.getElementById("cluster-list");
+  if (!list) return;
+  if (!items || !items.length) {
+    list.textContent = "No clusters available.";
+    return;
+  }
+  list.innerHTML = items
+    .slice(0, 8)
+    .map(
+      (c) =>
+        `<div class="intervention-item"><strong>${c.rootCause}</strong> · type ${c.storeType} · ${c.count} entities · ${eur(c.totalLeakEur)}</div>`
+    )
+    .join("");
+}
+
+let scenarioSelection = [];
+
+function toggleScenarioSelection(id) {
+  if (scenarioSelection.includes(id)) {
+    scenarioSelection = scenarioSelection.filter((x) => x !== id);
+  } else {
+    scenarioSelection = [...scenarioSelection, id].slice(-2);
+  }
+}
+
+async function compareScenariosIfReady() {
+  const out = document.getElementById("scenario-compare");
+  if (!out) return;
+  if (scenarioSelection.length < 2) {
+    out.textContent = "Select two scenarios to compare.";
+    return;
+  }
+  const [base, candidate] = scenarioSelection;
+  const res = await fetch(`/api/scenarios/compare?base=${encodeURIComponent(base)}&candidate=${encodeURIComponent(candidate)}`);
+  if (!res.ok) {
+    out.textContent = "Unable to compare selected scenarios.";
+    return;
+  }
+  const data = await res.json();
+  out.innerHTML =
+    `<strong>Leak delta:</strong> ${eur(data.baselineLeakDeltaEur)} · ` +
+    `<strong>Recovered delta:</strong> ${eur(data.recoveredDeltaEur)} · ` +
+    `<strong>ROI delta:</strong> ${data.roiDelta}%`;
+}
+
+function renderScenarios(items) {
+  const list = document.getElementById("scenario-list");
+  if (!list) return;
+  if (!items || !items.length) {
+    list.textContent = "No saved scenarios yet.";
+    return;
+  }
+  list.innerHTML = items
+    .slice(0, 10)
+    .map((s) => {
+      const selected = scenarioSelection.includes(s.id) ? "selected" : "";
+      return `<div class="intervention-item ${selected}">
+        <strong>${s.name}</strong> · recovered ${eur(s.result && s.result.recoveredEur)} · ROI ${s.result && s.result.roiScore}%
+        <button class="btn btn-ghost" data-scenario-select="${s.id}" type="button">Select</button>
+      </div>`;
+    })
+    .join("");
+
+  list.querySelectorAll("[data-scenario-select]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      toggleScenarioSelection(btn.dataset.scenarioSelect);
+      renderScenarios(items);
+      compareScenariosIfReady().catch(() => {});
+    });
+  });
+}
+
+function renderApprovals(items) {
+  const list = document.getElementById("approval-list");
+  if (!list) return;
+  if (!items || !items.length) {
+    list.textContent = "No approval requests yet.";
+    return;
+  }
+  list.innerHTML = items
+    .slice(0, 8)
+    .map(
+      (a) =>
+        `<div class="intervention-item">
+          <strong>${a.interventionId || "n/a"}</strong> · ${a.stage} · ${a.status}
+          <button class="btn btn-ghost" data-approve-id="${a.id}" type="button">Approve</button>
+          <button class="btn btn-ghost" data-reject-id="${a.id}" type="button">Reject</button>
+        </div>`
+    )
+    .join("");
+
+  list.querySelectorAll("[data-approve-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      approvalAction(btn.dataset.approveId, "approve").catch(() => {});
+    });
+  });
+  list.querySelectorAll("[data-reject-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      approvalAction(btn.dataset.rejectId, "reject").catch(() => {});
+    });
+  });
+}
+
+function renderAudit(items) {
+  const list = document.getElementById("audit-list");
+  if (!list) return;
+  if (!items || !items.length) {
+    list.textContent = "No audit events yet.";
+    return;
+  }
+  list.innerHTML = items
+    .slice(0, 10)
+    .map(
+      (e) => `<div class="intervention-item"><strong>${e.action}</strong> · ${e.actor} · ${new Date(e.createdAt).toLocaleString()}</div>`
+    )
+    .join("");
+}
+
+function renderDecisionStudio(data) {
+  const out = document.getElementById("studio-output");
+  if (!out) return;
+  out.innerHTML = `<strong>Diagnosis:</strong> ${data.diagnosis}<br><strong>Recommendation:</strong> ${data.recommendation}<br><strong>Hint:</strong> ${data.scenarioHint}`;
+}
+
+function renderMobileCommand(report, live) {
+  const risk = document.getElementById("mobile-risk");
+  const driver = document.getElementById("mobile-driver");
+  const alerts = document.getElementById("mobile-alerts");
+  const summary = report.summary || {};
+  if (risk) risk.textContent = `Risk: ${number((summary.riskStores || 0) + (summary.criticalStores || 0))}`;
+  if (driver) driver.textContent = `Driver: ${summary.topLeakArea || "n/a"}`;
+  if (alerts) alerts.textContent = `Alerts: ${number(live.activeAlerts || 0)}`;
+}
+
 async function refreshInterventions() {
   const res = await fetch("/api/interventions");
   const items = await res.json();
   renderInterventions(items);
+}
+
+async function refreshImpactAndClusters() {
+  const [impactRes, clustersRes] = await Promise.all([
+    fetch("/api/impact-ranking"),
+    fetch("/api/root-cause-clusters")
+  ]);
+  const [impact, clusters] = await Promise.all([impactRes.json(), clustersRes.json()]);
+  renderImpactRanking(impact);
+  renderClusters(clusters);
+}
+
+async function refreshScenarios() {
+  const res = await fetch("/api/scenarios");
+  const scenarios = await res.json();
+  renderScenarios(scenarios);
+}
+
+async function saveScenario() {
+  const name = document.getElementById("scn-name");
+  const promo = document.getElementById("scn-promo");
+  const closure = document.getElementById("scn-closure");
+  const conversion = document.getElementById("scn-conversion");
+  if (!name || !promo || !closure || !conversion) return;
+  await fetch("/api/scenarios", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: name.value || undefined,
+      promo: Number(promo.value || 0),
+      closure: Number(closure.value || 0),
+      conversion: Number(conversion.value || 0)
+    })
+  });
+  name.value = "";
+  promo.value = "";
+  closure.value = "";
+  conversion.value = "";
+  await refreshScenarios();
+}
+
+async function runDecisionStudio() {
+  const q = document.getElementById("studio-q");
+  const text = q ? q.value : "";
+  const res = await fetch(`/api/decision-studio?q=${encodeURIComponent(text || "")}`);
+  const data = await res.json();
+  renderDecisionStudio(data);
+}
+
+async function refreshApprovals() {
+  const res = await fetch("/api/approvals");
+  const items = await res.json();
+  renderApprovals(items);
+}
+
+async function requestApproval() {
+  const intervention = document.getElementById("apr-intervention");
+  const notes = document.getElementById("apr-notes");
+  if (!intervention || !notes) return;
+  await fetch("/api/approvals", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      interventionId: intervention.value || "",
+      notes: notes.value || ""
+    })
+  });
+  intervention.value = "";
+  notes.value = "";
+  await refreshApprovals();
+}
+
+async function approvalAction(id, action) {
+  await fetch("/api/approvals/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, action })
+  });
+  await refreshApprovals();
+}
+
+async function refreshAudit() {
+  const res = await fetch("/api/audit");
+  const items = await res.json();
+  renderAudit(items);
 }
 
 async function addIntervention() {
@@ -286,9 +522,31 @@ async function refreshPipelineStatus() {
 
 let latestPipelineSuccess = null;
 
+function connectRealtimeStream() {
+  if (!window.EventSource) return null;
+  const stream = new EventSource("/api/stream");
+  stream.addEventListener("snapshot", (ev) => {
+    try {
+      const data = JSON.parse(ev.data);
+      if (data.live) renderLive(data.live);
+      if (data.pipeline) renderPipelineStatus(data.pipeline);
+      if (data.live && window.__latestReportForMobile) {
+        renderMobileCommand(window.__latestReportForMobile, data.live);
+      }
+    } catch (err) {
+      // noop
+    }
+  });
+  stream.onerror = () => {
+    // let browser auto-reconnect
+  };
+  return stream;
+}
+
 async function loadDashboardData() {
   const res = await fetch("/api/report");
   const report = await res.json();
+  window.__latestReportForMobile = report;
 
   renderDatasetTag(report);
   renderTrustPills(report);
@@ -315,6 +573,11 @@ async function loadDashboardData() {
   renderRoleSummary("ceo", report.summary || {});
   await refreshSimulation();
   await refreshInterventions();
+  await refreshImpactAndClusters();
+  await refreshScenarios();
+  await refreshApprovals();
+  await refreshAudit();
+  renderMobileCommand(report, live);
 }
 
 function fallbackKpis(summary) {
@@ -573,6 +836,44 @@ async function run() {
   const firstPipeline = await refreshPipelineStatus();
   latestPipelineSuccess = firstPipeline.lastSuccessAt || null;
 
+  const studioRun = document.getElementById("studio-run");
+  if (studioRun) {
+    studioRun.addEventListener("click", () => {
+      runDecisionStudio().catch(() => {});
+    });
+  }
+
+  const studioInput = document.getElementById("studio-q");
+  if (studioInput) {
+    studioInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        runDecisionStudio().catch(() => {});
+      }
+    });
+  }
+
+  const saveScenarioBtn = document.getElementById("scn-save");
+  if (saveScenarioBtn) {
+    saveScenarioBtn.addEventListener("click", () => {
+      saveScenario().catch(() => {});
+    });
+  }
+
+  const approvalRequestBtn = document.getElementById("apr-request");
+  if (approvalRequestBtn) {
+    approvalRequestBtn.addEventListener("click", () => {
+      requestApproval().catch(() => {});
+    });
+  }
+
+  const mobileRefresh = document.getElementById("mobile-refresh");
+  if (mobileRefresh) {
+    mobileRefresh.addEventListener("click", () => {
+      loadDashboardData().catch(() => {});
+    });
+  }
+
   setInterval(() => {
     refreshPipelineStatus()
       .then((status) => {
@@ -583,6 +884,8 @@ async function run() {
       })
       .catch(() => {});
   }, 10000);
+
+  connectRealtimeStream();
 }
 
 run().catch((err) => {

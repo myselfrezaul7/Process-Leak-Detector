@@ -130,10 +130,48 @@
         </article>
       </section>
 
+      <section class="two-col">
+        <article class="card">
+          <h2>AI Decision Studio</h2>
+          <p class="helper">Guided flow: diagnose, compare scenarios, and execute action.</p>
+          <div class="copilot-shell">
+            <input id="studio-q" type="text" placeholder="What should we prioritize this week?" />
+            <button class="btn btn-primary" id="studio-run" type="button">Run studio</button>
+          </div>
+          <div id="studio-output" class="copilot-answer">Decision studio output will appear here.</div>
+        </article>
+        <article class="card">
+          <h2>Scenario Sandbox</h2>
+          <p class="helper">Create and compare versioned scenarios for strategy review.</p>
+          <div class="intervention-form">
+            <input id="scn-name" type="text" placeholder="Scenario name" />
+            <input id="scn-promo" type="number" placeholder="Promo %" />
+            <input id="scn-closure" type="number" placeholder="Closure %" />
+            <input id="scn-conversion" type="number" placeholder="Conversion %" />
+            <button class="btn btn-ghost" id="scn-save" type="button">Save scenario</button>
+          </div>
+          <div id="scenario-list" class="intervention-list"></div>
+          <div id="scenario-compare" class="sim-output">Select two scenarios to compare.</div>
+        </article>
+      </section>
+
       <section class="card" id="recommendations">
         <h2>Recommended Transformation Actions</h2>
         <p class="helper">Prioritized actions designed to recover the fastest impact.</p>
         <ol id="recommendation-list" class="reco-list"></ol>
+      </section>
+
+      <section class="two-col">
+        <article class="card">
+          <h2>Impact Score Engine</h2>
+          <p class="helper">Weighted ranking by leak size, urgency, confidence, and readiness.</p>
+          <div id="impact-list" class="intervention-list"></div>
+        </article>
+        <article class="card">
+          <h2>Root-Cause Clusters</h2>
+          <p class="helper">AI clustering of leak patterns by driver and store context.</p>
+          <div id="cluster-list" class="intervention-list"></div>
+        </article>
       </section>
 
       <section class="two-col">
@@ -181,6 +219,35 @@
           <button class="btn btn-ghost role-btn" data-role="store" type="button">Store Manager</button>
         </div>
         <div id="role-summary" class="role-summary"></div>
+      </section>
+
+      <section class="two-col">
+        <article class="card">
+          <h2>Approvals Workflow</h2>
+          <p class="helper">Govern intervention rollout through lightweight approvals.</p>
+          <div class="intervention-form">
+            <input id="apr-intervention" type="text" placeholder="Intervention ID" />
+            <input id="apr-notes" type="text" placeholder="Approval notes" />
+            <button class="btn btn-ghost" id="apr-request" type="button">Request approval</button>
+          </div>
+          <div id="approval-list" class="intervention-list"></div>
+        </article>
+        <article class="card">
+          <h2>Compliance Timeline</h2>
+          <p class="helper">Audit trail for auth, interventions, approvals, and task actions.</p>
+          <div id="audit-list" class="intervention-list"></div>
+        </article>
+      </section>
+
+      <section class="card">
+        <h2>Mobile Command View</h2>
+        <p class="helper">Compact war-room mode for quick decisions on mobile.</p>
+        <div class="mobile-command">
+          <div><strong id="mobile-risk">Risk: --</strong></div>
+          <div><strong id="mobile-driver">Driver: --</strong></div>
+          <div><strong id="mobile-alerts">Alerts: --</strong></div>
+          <button class="btn btn-ghost" type="button" id="mobile-refresh">Refresh snapshot</button>
+        </div>
       </section>
 
       <section class="card">

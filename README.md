@@ -49,6 +49,17 @@ node server.js
 - `GET /api/pipeline-status`
 - `POST /api/rebuild`
 - `GET /api/anomalies`
+- `GET /api/impact-ranking`
+- `GET /api/root-cause-clusters`
+- `GET /api/scenarios`
+- `POST /api/scenarios`
+- `GET /api/scenarios/compare?base=<id>&candidate=<id>`
+- `GET /api/decision-studio?q=...`
+- `GET /api/stream` (SSE realtime feed)
+- `GET /api/approvals`
+- `POST /api/approvals`
+- `POST /api/approvals/action`
+- `GET /api/audit`
 - `POST /api/alerts/refresh`
 - `GET /api/alerts`
 - `GET /api/explain?entityId=Store%201`
@@ -88,6 +99,8 @@ Most endpoints support multi-tenant routing via query (`?tenant=default`) or hea
 - Statistical anomaly detection (`/api/anomalies`)
 - Explainability endpoint (`/api/explain`)
 - Alert generation (`/api/alerts`)
+- Impact scoring + root-cause clustering
+- AI Decision Studio orchestration
 
 4. ROI science:
 - Counterfactual and confidence scoring for interventions
@@ -96,11 +109,14 @@ Most endpoints support multi-tenant routing via query (`?tenant=default`) or hea
 - Integration task handoff endpoint (`/api/integrations/task`)
 - Scheduled digest automation (`/api/digest/latest`)
 - Existing export layer retained
+- Scenario versioning + comparison
+- Approval workflow + compliance audit timeline
 
 6. Scale primitives:
 - Multi-tenant API context
 - Cache invalidation on writes/rebuild
 - Health and observability improvements
+- Realtime SSE updates and mobile command view
 
 ## Dynamic data workflow
 

@@ -561,6 +561,22 @@ h2 {
   background: rgba(255, 255, 255, 0.03);
 }
 
+.intervention-item.selected {
+  border-color: rgba(94, 234, 212, 0.55);
+  background: rgba(94, 234, 212, 0.1);
+}
+
+.intervention-item button {
+  margin-left: 0.4rem;
+}
+
+.mobile-command {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.7rem;
+  align-items: center;
+}
+
 .role-switch {
   display: flex;
   flex-wrap: wrap;
